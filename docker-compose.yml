@@ -1,0 +1,71 @@
+services:
+    rabbitmq:
+        image: rabbitmq:3.8.11-management
+        container_name: rabbitmq
+        volumes:
+            - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
+        environment:
+            RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+        ports:
+            - 5672:5672
+            - 15672:15672
+    master:
+      build: dockerfiles/Master
+      tty: true
+      volumes:
+          - ./php/client:/home/ubuntu/client
+          - ./php/analysis:/home/ubuntu/analysis
+          - ./php/debloating_templates:/home/ubuntu/debloating_templates
+    worker:
+      build: dockerfiles/PHPWorker
+      tty: true
+      volumes:
+          - ./php/client:/home/ubuntu/client
+          - ./php/debloating_templates:/home/ubuntu/debloating_templates
+      deploy:
+        mode: replicated
+        replicas: 14
+      restart: always
+    db:
+        image: mysql:latest
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: grafana
+            MYSQL_USER: cc_user
+            MYSQL_PASSWORD: cc_password
+        ports:
+            - "6033:3306"
+        volumes:
+            - dbdata:/var/lib/mysql
+            - ./dockerfiles/db:/docker-entrypoint-initdb.d
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        links:
+            - db
+        environment:
+            PMA_HOST: db
+            PMA_PORT: 3306
+            PMA_ARBITRARY: 1
+        restart: always
+        ports:
+            - 8080:80
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+            - "3000:3000"
+        environment: 
+            GF_SECURITY_ADMIN_USER: admin
+            GF_SECURITY_ADMIN_PASSWORD: admin
+            GF_DATABASE_TYPE: mysql
+            GF_DATABASE_HOST: db:3306
+            GF_DATABASE_NAME: grafana
+            GF_DATABASE_USER: cc_user
+            GF_DATABASE_PASSWORD: cc_password
+        volumes:
+            - grafana-storage:/var/lib/grafana
+        restart: always
+volumes:
+    dbdata:
+    grafana-storage:

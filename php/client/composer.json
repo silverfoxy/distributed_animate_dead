@@ -1,0 +1,16 @@
+{
+  "name": "animatedead/client",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "babak",
+      "email": "baminazad@cs.stonybrook.edu"
+    }
+  ],
+  "require": {
+    "php-amqplib/php-amqplib": ">=2.9.0",
+    "vlucas/phpdotenv": "^5.3"
+  }
+}
