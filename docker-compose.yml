@@ -2,8 +2,6 @@ services:
     rabbitmq:
         image: rabbitmq:3.8.11-management
         container_name: rabbitmq
-        volumes:
-            - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
         environment:
             RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
             RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}

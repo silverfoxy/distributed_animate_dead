@@ -34,3 +34,4 @@ RUN apt-get update && apt-get install -y \
     && pecl install xdebug \
     && docker-php-ext-enable xdebug
 WORKDIR "/home/ubuntu/client"
+#CMD ["php", "WraithOrchestrator.php", "-d"]

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Apr 20, 2021 at 03:12 PM
+-- Generation Time: Apr 30, 2021 at 02:38 PM
 -- Server version: 8.0.23
 -- PHP Version: 7.4.16
 
@@ -34,7 +34,11 @@ CREATE TABLE `executions` (
   `id` varchar(13) NOT NULL,
   `priority` int NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `fk_task_execution_id` varchar(13) NOT NULL
+  `fk_task_execution_id` varchar(13) NOT NULL,
+  `termination` tinyint(1) NOT NULL DEFAULT '0',
+  `branch_filename` text NOT NULL,
+  `branch_linenumber` int NOT NULL,
+  `lookahead_coverage` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------

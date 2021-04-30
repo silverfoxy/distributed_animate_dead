@@ -4,6 +4,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Wire\AMQPTable;
+use PhpAmqpLib\Exception\AMQPTimeoutException;
 
 // Define queue names
 include 'constants.php';
@@ -16,14 +17,13 @@ class WraithOrchestrator {
     public $callback;
     public $worker;
     public $overall_coverage_info = [];
-    public $execution_id;
     public $log_filename;
 
     public function __construct($argc, $argv) {
         // Load env variables
         $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
         $dotenv->load();
-        $this->execution_id = uniqid();
+        $execution_id = uniqid();
         // Connect to RabbitMQ
         $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $_ENV['RABBITMQ_DEFAULT_USER'], $_ENV['RABBITMQ_DEFAULT_PASS']);
         $this->channel = $this->connection->channel();
@@ -34,8 +34,8 @@ class WraithOrchestrator {
         $this->worker = new AnimateDeadWorker();
         // Parse cli parameters
         // Sets $this->log_filename
-        $daemon = $this->parse_cli_params($argc, $argv, $this->connection, $this->channel);
-        $result = $this->log_job_to_db($this->execution_id, $this->log_filename);
+        $daemon = $this->parse_cli_params($argc, $argv, $this->connection, $this->channel, $execution_id);
+        $result = $this->log_job_to_db($execution_id, $this->log_filename);
         if ($result !== true) {
             exit('Exiting: Failed to log execution to database.'.PHP_EOL);
         }
@@ -57,13 +57,14 @@ class WraithOrchestrator {
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
                 $reanimation_state = $message_body;
-                $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
-                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash);
-                $this->log_execution_to_db($task_id, $priority);
+                $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
+                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id']);
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], 0);
             }
             else {
                 // Received a termination task
                 echo sprintf(' [%s] Received termination info (%d %% new coverage).', date("h:i:sa"), $priority), PHP_EOL;
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0, 0);
             }
             echo " [+] Done\n";
         };
@@ -73,24 +74,32 @@ class WraithOrchestrator {
 
         echo " [*] Waiting for messages. To exit press CTRL+C\n";
         while ($this->channel->is_consuming()) {
-            $this->channel->wait();
+            try {
+                $this->channel->wait(null, false, 100);
+            }
+            catch (AMQPTimeoutException $exception) {
+                echo 'Queue read timeout exception, retrying in 2 seconds...'.PHP_EOL;
+                sleep(2);
+            }
         }
 
         $this->channel->close();
         $this->connection->close();
     }
 
-    protected function log_execution_to_db($task_id, $priority) {
+    protected function log_execution_to_db($task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead=0) {
         $conn = new mysqli('db', 'root', 'root', 'animatedead_executions');
         if ($conn->connect_error) {
             echo sprintf('Failed to log execution [&s] to database (Connection error).'.PHP_EOL, $task_id);
+            echo $conn->error.PHP_EOL;
             return;
         }
-        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id) VALUES (?, ?, ?)");
-        $query->bind_param("sis", $task_id, $priority, $this->execution_id);
+        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, termination, branch_filename, branch_linenumber, lookahead_coverage) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $query->bind_param("sisisii", $task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead);
         $result = $query->execute();
         if ($result === false) {
             echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
+            echo $conn->error.PHP_EOL;
         }
     }
 
@@ -105,6 +114,7 @@ class WraithOrchestrator {
         $result = $query->execute();
         if ($result === false) {
             echo sprintf('Failed to log job [%s] to database (Query execution error).'.PHP_EOL, $execution_id);
+            echo $conn->error.PHP_EOL;
             return false;
         }
         return true;
@@ -130,7 +140,7 @@ class WraithOrchestrator {
         return $new_lines >= $base ? 100 : ($new_lines * 100 / $base);
     }
 
-    protected function parse_cli_params(int $argc, array $argv, $connection, $channel) {
+    protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id) {
         $usage='Usage: php orchestrator.php -l access.log -e extended_logs.log -r application/root/dir -u uri_prefix [-d -i ip_addr -v verbosity --reanimation id]'.PHP_EOL;
         if (isset($argc))
         {
@@ -185,7 +195,7 @@ class WraithOrchestrator {
                         $init_env['_GET'] = $parameters ?? [];
                         $init_env['_POST'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], 0, '', '', []);
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], 0, '', '', [], $execution_id);
                     }
                 }
             }
@@ -214,7 +224,7 @@ class WraithOrchestrator {
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
-                    $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], 0, '', '', []);
+                    $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
                 }
             }
             if (isset($options['d'])) {
