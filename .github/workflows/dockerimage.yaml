@@ -32,7 +32,7 @@ jobs:
       run: docker build ./php/client --file ./php/client/Worker.Dockerfile --tag $IMAGE_NAME_WORKER:$(date +%s)
 
     - name: Log into registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      run: echo "${{ secrets.PAT }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
     - name: Push image
       run: |
