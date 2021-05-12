@@ -1,0 +1,3 @@
+172.21.0.1 - - [04/May/2021:17:19:45 +0000] "GET /hotcrp/ HTTP/1.1" 200 1817 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+172.21.0.1 - - [04/May/2021:17:20:47 +0000] "GET /hotcrp/?postlogin=1 HTTP/1.1" 302 745 "http://localhost:8085/hotcrp/signin" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+172.21.0.1 - - [04/May/2021:18:54:51 +0000] "GET /hotcrp/?signedout=1 HTTP/1.1" 200 1849 "http://localhost:8085/hotcrp/deadlines" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"

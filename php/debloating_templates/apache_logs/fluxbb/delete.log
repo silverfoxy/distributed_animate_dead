@@ -1,0 +1,2 @@
+172.21.0.1 - - [04/May/2021:17:17:35 +0000] "GET /fluxbb/delete.php?id=3 HTTP/1.1" 200 2310 "http://localhost:8085/fluxbb/viewtopic.php?id=2" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+172.21.0.1 - - [04/May/2021:17:17:37 +0000] "POST /fluxbb/delete.php?id=3 HTTP/1.1" 200 1230 "http://localhost:8085/fluxbb/delete.php?id=3" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"

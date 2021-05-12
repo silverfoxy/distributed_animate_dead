@@ -42,6 +42,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
         $msg = new AMQPMessage(json_encode($params), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT, 'correlation_id' => $task_id]);
 
         $this->channel->queue_declare(MANAGER_QUEUE, false, true, false, false);
+
         $this->channel->basic_publish($msg, '', MANAGER_QUEUE);
 
         echo sprintf(' [%s] Sent the termination info "%s" to the queue [%s].'.PHP_EOL, date("h:i:sa"), $task_id, MANAGER_QUEUE);
@@ -49,6 +50,8 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
 
     public function add_reanimation_task($init_env, $httpverb, $targetfile, $reanimationarray, $branch_filename, $branch_linenumber, $line_coverage_hash, $symbol_table_hash, $coverage_info, $execution_id) {
         $task_id = uniqid();
+        // Remove $ini_env['GLOBALS']['GLOBALS'] recursion before json_encode
+        unset($init_env['GLOBALS']['GLOBALS']);
         $params = ['init_env' => $init_env,
                    'httpverb' => $httpverb,
                    'targetfile' => $targetfile,
@@ -59,6 +62,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
                    'symbol_table_hash' => $symbol_table_hash,
                    'coverage_info' => $coverage_info,
                    'execution_id' => $execution_id];
+
         $msg = new AMQPMessage(json_encode($params), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT, 'correlation_id' => $task_id]);
 
         $this->channel->queue_declare(MANAGER_QUEUE, false, true, false, false);
@@ -76,6 +80,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
             'line_coverage_hash' => $line_coverage_hash,
             'symbol_table_hash' => $symbol_table_hash,
             'execution_id' => $execution_id];
+
         $msg = new AMQPMessage(json_encode($params), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT, 'correlation_id' => $task_id, 'priority' => $priority]);
 
         $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false, new AMQPTable(['x-max-priority' => 100]));

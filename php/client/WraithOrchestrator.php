@@ -53,7 +53,7 @@ class WraithOrchestrator {
             // Merge coverage info
             $coverage_info = $message_body['coverage_info'] ?? [];
             $priority = $this->merge_coverage($coverage_info);
-            if (array_key_exists('init_env', $message_body)) {
+            if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
                 $reanimation_state = $message_body;
@@ -195,7 +195,12 @@ class WraithOrchestrator {
                         $init_env['_GET'] = $parameters ?? [];
                         $init_env['_POST'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], 0, '', '', [], $execution_id);
+                        if (isset($parameters['reanimation']))  {
+                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                        }
+                        else {
+                            $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id);
+                        }
                     }
                 }
             }
@@ -224,7 +229,12 @@ class WraithOrchestrator {
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
-                    $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                    if (isset($parameters['reanimation']))  {
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                    }
+                    else {
+                        $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id);
+                    }
                 }
             }
             if (isset($options['d'])) {

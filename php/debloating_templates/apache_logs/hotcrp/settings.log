@@ -1,0 +1,2 @@
+172.21.0.1 - - [04/May/2021:19:47:07 +0000] "GET /hotcrp/settings HTTP/1.1" 302 806 "http://localhost:8085/hotcrp/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+172.21.0.1 - - [04/May/2021:19:47:07 +0000] "GET /hotcrp/settings/submissions HTTP/1.1" 200 2860 "http://localhost:8085/hotcrp/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"

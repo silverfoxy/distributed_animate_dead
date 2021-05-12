@@ -1,0 +1,2 @@
+172.21.0.1 - - [04/May/2021:17:19:58 +0000] "GET /hotcrp/signin HTTP/1.1" 200 1640 "http://localhost:8085/hotcrp/newaccount" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+172.21.0.1 - - [04/May/2021:17:20:46 +0000] "POST /hotcrp/signin HTTP/1.1" 302 1001 "http://localhost:8085/hotcrp/signin" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"

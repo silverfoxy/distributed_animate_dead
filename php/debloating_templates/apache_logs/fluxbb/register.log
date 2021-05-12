@@ -1,0 +1,2 @@
+172.21.0.1 - - [04/May/2021:17:14:36 +0000] "GET /fluxbb/register.php HTTP/1.1" 200 3713 "http://localhost:8085/fluxbb/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
+172.21.0.1 - - [04/May/2021:17:15:00 +0000] "POST /fluxbb/register.php?action=register HTTP/1.1" 200 1143 "http://localhost:8085/fluxbb/register.php" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrom
