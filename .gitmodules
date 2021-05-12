@@ -1,3 +1,2 @@
-[submodule "AnimateDead"]
-	path = php/client/animate_dead/
+[submodule "php/client/animate_dead"]
 	url = https://github.com/silverfoxy/AnimateDead
