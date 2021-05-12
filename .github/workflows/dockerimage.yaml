@@ -26,10 +26,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Orchestrator Docker image
-      run: docker build ./php/client --file Orchestrator.Dockerfile --tag $IMAGE_NAME_ORCHESTRATOR:$(date +%s)
+      run: docker build ./php/client --file ./php/client/Orchestrator.Dockerfile --tag $IMAGE_NAME_ORCHESTRATOR:$(date +%s)
 
     - name: Build Worker Docker image
-      run: docker build ./php/client --file Worker.Dockerfile --tag $IMAGE_NAME_WORKER:$(date +%s)
+      run: docker build ./php/client --file ./php/client/Worker.Dockerfile --tag $IMAGE_NAME_WORKER:$(date +%s)
 
     - name: Log into registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
