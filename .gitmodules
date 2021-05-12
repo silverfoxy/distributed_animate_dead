@@ -1,2 +1,2 @@
 [submodule "php/client/animate_dead"]
-	url = https://github.com/silverfoxy/AnimateDead
+	url = git@github.com:silverfoxy/AnimateDead.git
