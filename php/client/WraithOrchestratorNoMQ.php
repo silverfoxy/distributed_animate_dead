@@ -55,9 +55,9 @@ class WraithOrchestratorNoMQ {
             if (isset($params['reanimation'])) {
                 $reanimation_array = json_decode(file_get_contents(sprintf('animate_dead/logs/reanimation_logs/%s_reanimation_log.txt', $params['reanimation'])), true);
                 // Normalize paths from docker to local
-                array_walk($reanimation_array, function(&$value, $key) {
-                    $value['current_file'] = str_replace('/home/ubuntu', '/mnt/c/Users/baminazad/Documents/Pragsec/distributed_animate_dead/php', $value['current_file']);
-                });
+                // array_walk($reanimation_array, function(&$value, $key) {
+                //     $value['current_file'] = str_replace('/home/ubuntu', '/mnt/c/Users/baminazad/Documents/Pragsec/distributed_animate_dead/php', $value['current_file']);
+                // });
             }
             // Normal logs
             if (isset($params['log'])) {
