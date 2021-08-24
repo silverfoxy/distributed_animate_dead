@@ -30,9 +30,9 @@ RUN apt-get update && apt-get install -y \
         # sigchild \
         # sysvshm \
         # sysvsem \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    # && pecl install xdebug \
-    # && docker-php-ext-enable xdebug
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && pecl install xdebug \
+    && docker-php-ext-enable xdebug
 ADD "php.ini" "/usr/local/etc/php/php.ini"
 WORKDIR "/home/ubuntu/client"
-CMD ["php", "AnimateDeadWorker.php"]
+# CMD ["php", "AnimateDeadWorker.php"]

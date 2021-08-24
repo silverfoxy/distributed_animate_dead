@@ -1,3 +1,4 @@
+version: "3"
 services:
     rabbitmq:
         image: rabbitmq:3.8.11-management
@@ -26,6 +27,12 @@ services:
         mode: replicated
         replicas: 14
       restart: always
+    debug_worker:
+        build: dockerfiles/PHPWorkerNoMQ
+        tty: true
+        volumes:
+            - ./php/client:/home/ubuntu/client
+            - ./php/debloating_templates:/home/ubuntu/debloating_templates
     db:
         image: mysql:latest
         environment:
