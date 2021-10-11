@@ -12,10 +12,10 @@ foreach (glob($coverage_files_glob) as $coverage_file) {
     $lines = file($coverage_file);
     foreach ($lines as $line) {
         // skip non line numbers
-        if (strpos($line, '/home/ubuntu/d' !== 0)) {
+        if (strpos($line, '/home/ubuntu/d')===false) {
             continue;
         }
-        if (strpos($line, 'FuncCall' !== false)) {
+        if (strpos($line, 'FuncCall')!== false) {
             continue;
         }
         $lines_with_coverage[] = $line;
