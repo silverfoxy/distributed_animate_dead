@@ -78,7 +78,7 @@ class WraithOrchestratorNoMQ {
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
 
                         $reanimation_state = new ReanimationState($init_env, $verb, $reanimation_array ?? [], $target_file, 0, '', '');
-                        reanimate($reanimation_state, $this->worker);
+                        reanimate($reanimation_state, $this->worker, false);
                     }
                 }
             }
@@ -104,7 +104,7 @@ class WraithOrchestratorNoMQ {
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     $reanimation_state = new ReanimationState($init_env, $verb, $reanimation_array ?? [], $target_file, 0, '', '');
-                    reanimate($reanimation_state, $this->worker);
+                    reanimate($reanimation_state, $this->worker, true);
                 }
             }
         }
