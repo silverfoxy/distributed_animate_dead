@@ -25,7 +25,7 @@ services:
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
         mode: replicated
-        replicas: 14
+        replicas: 4
       restart: always
     debug_worker:
         build: dockerfiles/PHPWorkerNoMQ

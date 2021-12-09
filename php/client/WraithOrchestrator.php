@@ -52,7 +52,8 @@ class WraithOrchestrator {
             $message_body = json_decode($msg->body, true);
             // Merge coverage info
             $coverage_info = $message_body['coverage_info'] ?? [];
-            $priority = $this->merge_coverage($coverage_info);
+            $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
+            $priority = $this->merge_coverage($coverage_info, $new_branch_coverage);
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
@@ -120,7 +121,7 @@ class WraithOrchestrator {
         return true;
     }
 
-    protected function merge_coverage($new_coverage_info) {
+    protected function merge_coverage($new_coverage_info, $new_branch_coverage=[]) {
         $base = count($this->overall_coverage_info);
         $new_lines = 0;
         foreach ($new_coverage_info as $filename => $lines) {
@@ -137,7 +138,24 @@ class WraithOrchestrator {
                 }
             }
         }
-        return $new_lines >= $base ? 100 : ($new_lines * 100 / $base);
+        $new_branch_lines = 0;
+        if ($new_branch_coverage !== []) {
+            foreach ($new_branch_coverage as $filename => $lines) {
+                if (!array_key_exists($filename, $this->overall_coverage_info)) {
+                    $new_lines += sizeof($lines);
+                }
+                else {
+                    foreach ($lines as $line) {
+                        if(!array_key_exists($line, $this->overall_coverage_info[$filename])) {
+                            $new_lines++;
+                        }
+                    }
+                }
+            }
+            $new_branch_lines = $new_lines;
+        }
+
+        return $new_lines+$new_branch_lines >= $base ? 100 : (($new_lines+$new_branch_lines) * 100 / $base);
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id) {
@@ -196,7 +214,7 @@ class WraithOrchestrator {
                         $init_env['_POST'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                         if (isset($parameters['reanimation']))  {
-                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false);
+                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false, []);
                         }
                         else {
                             $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, false);
@@ -230,7 +248,7 @@ class WraithOrchestrator {
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     if (isset($parameters['reanimation']))  {
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true);
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true, []);
                     }
                     else {
                         $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, true);

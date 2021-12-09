@@ -12,7 +12,7 @@ include 'animate_dead/DistributedRaiseDead.php';
 
 class AnimateDeadWorkerMock implements IAnimateDeadWorker {
 
-    public function add_reanimation_task($init_env, $httpverb, $targetfile, $reanimationarray, $branch_filename, $branch_linenumber, $line_coverage_hash, $symbol_table_hash, $coverage_info, $execution_id, $extended_logs_emulation_mode) {
+    public function add_reanimation_task($init_env, $httpverb, $targetfile, $reanimationarray, $branch_filename, $branch_linenumber, $line_coverage_hash, $symbol_table_hash, $coverage_info, $execution_id, $extended_logs_emulation_mode, $new_branch_coverage) {
         echo sprintf(' [+] Fake sent the reanimation job "Dummy" to the queue [%s].'.PHP_EOL, MANAGER_QUEUE);
     }
 
