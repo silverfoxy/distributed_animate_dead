@@ -58,7 +58,7 @@ class WraithOrchestrator {
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
                 $reanimation_state = $message_body;
                 $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
-                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id']);
+                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
                 $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], 0);
             }
             else {
@@ -196,10 +196,10 @@ class WraithOrchestrator {
                         $init_env['_POST'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                         if (isset($parameters['reanimation']))  {
-                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false);
                         }
                         else {
-                            $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id);
+                            $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, false);
                         }
                     }
                 }
@@ -230,10 +230,10 @@ class WraithOrchestrator {
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     if (isset($parameters['reanimation']))  {
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true);
                     }
                     else {
-                        $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id);
+                        $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, true);
                     }
                 }
             }
