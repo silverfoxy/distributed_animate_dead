@@ -8,8 +8,16 @@ services:
             RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         ports:
-            - 5672:5672
-            - 15672:15672
+            - "127.0.0.1:5672:5672"
+            - "127.0.0.1:15672:15672"
+        deploy:
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 2G
+                reservations:
+                    cpus: "1"
+                    memory: 512M
     master:
       build: dockerfiles/Master
       tty: true
@@ -17,6 +25,14 @@ services:
           - ./php/client:/home/ubuntu/client
           - ./php/analysis:/home/ubuntu/analysis
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
+      deploy:
+        resources:
+          limits:
+            cpus: "1"
+            memory: 512M
+          reservations:
+            cpus: "0.25"
+            memory: 128M
     worker:
       build: dockerfiles/PHPWorker
       tty: true
@@ -25,7 +41,14 @@ services:
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
         mode: replicated
-        replicas: 4
+        replicas: 0
+        resources:
+          limits:
+            cpus: "1"
+            memory: 1G
+          reservations:
+            cpus: "0.5"
+            memory: 256M
       restart: always
     debug_worker:
         build: dockerfiles/PHPWorkerNoMQ
@@ -41,7 +64,7 @@ services:
             MYSQL_USER: cc_user
             MYSQL_PASSWORD: cc_password
         ports:
-            - "6033:3306"
+            - "127.0.0.1:6033:3306"
         volumes:
             - dbdata:/var/lib/mysql
             - ./dockerfiles/db:/docker-entrypoint-initdb.d
@@ -55,11 +78,11 @@ services:
             PMA_ARBITRARY: 1
         restart: always
         ports:
-            - 8080:80
+            - "127.0.0.1:8080:80"
     grafana:
         image: grafana/grafana:latest
         ports:
-            - "3000:3000"
+            - "127.0.0.1:3000:3000"
         environment: 
             GF_SECURITY_ADMIN_USER: admin
             GF_SECURITY_ADMIN_PASSWORD: admin
