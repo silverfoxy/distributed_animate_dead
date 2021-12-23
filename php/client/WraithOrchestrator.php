@@ -32,6 +32,7 @@ class WraithOrchestrator {
         $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false, new AMQPTable(['x-max-priority' => 100]));
 
         $this->worker = new AnimateDeadWorker();
+
         // Parse cli parameters
         // Sets $this->log_filename
         $daemon = $this->parse_cli_params($argc, $argv, $this->connection, $this->channel, $execution_id);
@@ -52,19 +53,20 @@ class WraithOrchestrator {
             $message_body = json_decode($msg->body, true);
             // Merge coverage info
             $coverage_info = $message_body['coverage_info'] ?? [];
-            $priority = $this->merge_coverage($coverage_info);
+            $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
+            $priority = $this->merge_coverage($coverage_info, $new_branch_coverage);
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
                 $reanimation_state = $message_body;
                 $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
-                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id']);
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], 0);
+                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], count($new_branch_coverage));
             }
             else {
                 // Received a termination task
                 echo sprintf(' [%s] Received termination info (%d %% new coverage).', date("h:i:sa"), $priority), PHP_EOL;
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0, 0);
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  0);
             }
             echo " [+] Done\n";
         };
@@ -120,7 +122,7 @@ class WraithOrchestrator {
         return true;
     }
 
-    protected function merge_coverage($new_coverage_info) {
+    protected function merge_coverage($new_coverage_info, $new_branch_coverage=[]) {
         $base = count($this->overall_coverage_info);
         $new_lines = 0;
         foreach ($new_coverage_info as $filename => $lines) {
@@ -137,7 +139,24 @@ class WraithOrchestrator {
                 }
             }
         }
-        return $new_lines >= $base ? 100 : ($new_lines * 100 / $base);
+        $new_branch_lines = 0;
+        if ($new_branch_coverage !== []) {
+            foreach ($new_branch_coverage as $filename => $lines) {
+                if (!array_key_exists($filename, $this->overall_coverage_info)) {
+                    $new_lines += sizeof($lines);
+                }
+                else {
+                    foreach ($lines as $line) {
+                        if(!array_key_exists($line, $this->overall_coverage_info[$filename])) {
+                            $new_lines++;
+                        }
+                    }
+                }
+            }
+            $new_branch_lines = $new_lines;
+        }
+
+        return $new_lines+$new_branch_lines >= $base ? 100 : (($new_lines+$new_branch_lines) * 100 / $base);
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id) {
@@ -196,10 +215,10 @@ class WraithOrchestrator {
                         $init_env['_POST'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                         if (isset($parameters['reanimation']))  {
-                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false, []);
                         }
                         else {
-                            $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id);
+                            $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, false);
                         }
                     }
                 }
@@ -229,11 +248,11 @@ class WraithOrchestrator {
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
-                    if (isset($parameters['reanimation']))  {
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id);
+                    if (isset($params['reanimation']))  {
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true, []);
                     }
                     else {
-                        $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id);
+                        $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, true);
                     }
                 }
             }
