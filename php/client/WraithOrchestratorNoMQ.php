@@ -102,6 +102,7 @@ class WraithOrchestratorNoMQ {
                     $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
+                    $init_env['_FILES'] = $log_entry['files'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     $reanimation_state = new ReanimationState($init_env, $verb, $reanimation_array ?? [], $target_file, 0, '', '');
                     reanimate($reanimation_state, $this->worker, true);
