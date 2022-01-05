@@ -247,6 +247,7 @@ class WraithOrchestrator {
                     $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
+                    $init_env['_FILES'] = $log_entry['files'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     if (isset($params['reanimation']))  {
                         $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true, []);
