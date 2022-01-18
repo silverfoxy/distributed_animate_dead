@@ -56,6 +56,10 @@ services:
         volumes:
             - ./php/client:/home/ubuntu/client
             - ./php/debloating_templates:/home/ubuntu/debloating_templates
+    debug_worker:
+        build: dockerfiles/Apache
+        volumes:
+            - ./php/debloating_templates/app:/var/www/html
     db:
         image: mysql:latest
         environment:
