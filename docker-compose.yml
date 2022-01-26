@@ -56,8 +56,9 @@ services:
         volumes:
             - ./php/client:/home/ubuntu/client
             - ./php/debloating_templates:/home/ubuntu/debloating_templates
-    Apache:
+    apache:
         build: dockerfiles/Apache
+        container_name: apache
         volumes:
             - ./php/debloating_templates/app:/var/www/html
     db:

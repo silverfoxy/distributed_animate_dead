@@ -62,7 +62,7 @@ class WraithOrchestratorNoMQ {
             // Normal logs
             if (isset($params['log'])) {
                 $log_file_path = $params['log'];
-                $flows = parse_logs($log_file_path, $application_root_dir, $uri_prefix, $filter_ip);
+                $flows = parse_logs($log_file_path, $application_root_dir, $uri_prefix, $filter_ip, $htaccess_bool);
                 foreach ($flows as $flow) {
                     foreach ($flow as $log_entry) {
                         $verb = $log_entry->verb;
