@@ -1,8 +1,8 @@
 <?php
 
-$server["SCRIPT_FILENAME"] = "/var/www/html/api.php";
+$server["SCRIPT_FILENAME"] = "../debloating_templates/app/api.php";
 $server["SCRIPT_NAME"] = "api.php";
-$server["REQUEST_URI"] = "/api/status";
+$server["REQUEST_URI"] = "/api/status?base=";
 $sfilename = $server["SCRIPT_FILENAME"]; // pathname
 $sfile = substr($sfilename, strrpos($sfilename, "/") + 1); #/var/www/html/api.php --- sfile = api.php
 
