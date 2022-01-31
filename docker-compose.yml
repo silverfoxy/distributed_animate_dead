@@ -41,7 +41,7 @@ services:
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
         mode: replicated
-        replicas: 0
+        replicas: 4
         resources:
           limits:
             cpus: "1"
@@ -56,6 +56,11 @@ services:
         volumes:
             - ./php/client:/home/ubuntu/client
             - ./php/debloating_templates:/home/ubuntu/debloating_templates
+    apache:
+        build: dockerfiles/Apache
+        container_name: apache
+        volumes:
+            - ./php/debloating_templates/app:/var/www/html
     db:
         image: mysql:latest
         environment:

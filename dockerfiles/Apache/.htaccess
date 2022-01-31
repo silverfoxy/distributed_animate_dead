@@ -1,0 +1,15 @@
+Options -MultiViews
+
+<IfModule mod_rewrite.c>
+RewriteEngine on
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteCond %{REQUEST_URI} ^(.*)$
+RewriteRule ^[^/]*$ %1.html [L,NE]
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteCond %{REQUEST_URI},,$1,, ^(.*)(.*,,)\2$ 
+RewriteRule ^[^/]*(/.*)$ %1.php$1 [L,NE] 
+#%1 - api
+#$1 - /status
+#api.php/status
+</IfModule>

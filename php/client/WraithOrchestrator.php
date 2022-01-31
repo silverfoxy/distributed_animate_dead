@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+use AnimateDead\Utils;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Wire\AMQPTable;
 use PhpAmqpLib\Exception\AMQPTimeoutException;
@@ -24,6 +25,8 @@ class WraithOrchestrator {
         $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
         $dotenv->load();
         $execution_id = uniqid();
+        $config_file_path = './animate_dead/config.json';
+        $htaccess_bool = Utils::get_htaccess_bool($config_file_path);
         // Connect to RabbitMQ
         $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $_ENV['RABBITMQ_DEFAULT_USER'], $_ENV['RABBITMQ_DEFAULT_PASS']);
         $this->channel = $this->connection->channel();
@@ -35,7 +38,7 @@ class WraithOrchestrator {
 
         // Parse cli parameters
         // Sets $this->log_filename
-        $daemon = $this->parse_cli_params($argc, $argv, $this->connection, $this->channel, $execution_id);
+        $daemon = $this->parse_cli_params($argc, $argv, $this->connection, $this->channel, $execution_id, $htaccess_bool);
         $result = $this->log_job_to_db($execution_id, $this->log_filename);
         if ($result !== true) {
             exit('Exiting: Failed to log execution to database.'.PHP_EOL);
@@ -47,7 +50,6 @@ class WraithOrchestrator {
 
     protected function run_daemon() {
         $this->channel->queue_declare(MANAGER_QUEUE, false, true, false, false);
-
         $this->callback = function ($msg) {
             $task_id = $msg->get('correlation_id');
             $message_body = json_decode($msg->body, true);
@@ -70,7 +72,6 @@ class WraithOrchestrator {
             }
             echo " [+] Done\n";
         };
-
         $this->channel->basic_qos(null, 1, null);
         $this->channel->basic_consume(MANAGER_QUEUE, '', false, true, false, false, $this->callback);
 
@@ -159,7 +160,7 @@ class WraithOrchestrator {
         return $new_lines+$new_branch_lines >= $base ? 100 : (($new_lines+$new_branch_lines) * 100 / $base);
     }
 
-    protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id) {
+    protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id, $htaccess_bool) {
         $usage='Usage: php orchestrator.php -l access.log -e extended_logs.log -r application/root/dir -u uri_prefix [-d -i ip_addr -v verbosity --reanimation id]'.PHP_EOL;
         if (isset($argc))
         {
@@ -200,17 +201,19 @@ class WraithOrchestrator {
             // Normal logs
             if (isset($params['log'])) {
                 $log_file_path = $params['log'];
-                $flows = parse_logs($log_file_path, $application_root_dir, $uri_prefix, $filter_ip);
+                $flows = parse_logs($log_file_path, $application_root_dir, $uri_prefix, $filter_ip, $htaccess_bool);
                 foreach ($flows as $flow) {
                     foreach ($flow as $log_entry) {
                         $verb = $log_entry->verb;
                         $target_file = $log_entry->target_file;
-                        $status_code = $log_entry->status;
                         $parameters = $log_entry->query_string_array;
-
+                        $uri = $log_entry->path;
                         $init_env['_SESSION'] = [];
                         $init_env['_COOKIE'] = [];
                         $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
+                        $init_env['_SERVER']['REQUEST_URI'] = $uri;
+                        $init_env['_SERVER']['SCRIPT_FILENAME'] = $target_file;
+                        $init_env['_SERVER']['SCRIPT_NAME'] = "/" . basename($target_file);
                         $init_env['_GET'] = $parameters ?? [];
                         $init_env['_POST'] = [];
                         $init_env['_FILES'] = [];
