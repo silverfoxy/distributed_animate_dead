@@ -1,6 +1,0 @@
-<?php
-
-echo $_SERVER['SCRIPT_NAME'].PHP_EOL;
-echo $_SERVER['SCRIPT_FILENAME'];
-
-

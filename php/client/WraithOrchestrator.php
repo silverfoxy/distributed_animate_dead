@@ -54,7 +54,6 @@ class WraithOrchestrator {
             $task_id = $msg->get('correlation_id');
             $message_body = json_decode($msg->body, true);
             // Merge coverage info
-            echo $message_body;
             $coverage_info = $message_body['coverage_info'] ?? [];
             $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
             $priority = $this->merge_coverage($coverage_info, $new_branch_coverage);
