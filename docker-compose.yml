@@ -41,7 +41,7 @@ services:
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
         mode: replicated
-        replicas: 0
+        replicas: 4
         resources:
           limits:
             cpus: "1"
