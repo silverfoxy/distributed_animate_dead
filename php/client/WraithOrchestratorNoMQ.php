@@ -14,6 +14,7 @@ class WraithOrchestratorNoMQ {
     public $worker;
 
     public function __construct($argc, $argv) {
+        $config_file_path = './animate_dead/config.json';
         $htaccess_bool = Utils::get_htaccess_bool($config_file_path);
         $this->worker = new AnimateDeadWorkerMock();
         // Parse cli parameters
