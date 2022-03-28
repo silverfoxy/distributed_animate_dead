@@ -1,0 +1,5 @@
+{
+    "require": {
+        "siteworxpro/cli-progress-bar": "^1.1"
+    }
+}
