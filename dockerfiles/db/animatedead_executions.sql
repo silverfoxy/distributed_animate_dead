@@ -26,6 +26,44 @@ USE `animatedead_executions`;
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `debug`
+--
+
+CREATE TABLE `debug` (
+  `id` int NOT NULL,
+  `filename` varchar(500) NOT NULL,
+  `linenumber` int NOT NULL,
+  `priority` int NOT NULL,
+  `new_coverage` text NOT NULL,
+  `new_branch_coverage` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `debug`
+--
+ALTER TABLE `debug`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `debug`
+--
+ALTER TABLE `debug`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+--
 -- Table structure for table `executions`
 --
 

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WraithOrchestratorNoMQ.php (2)" type="PhpLocalRunConfigurationType" factoryName="PHP Console" path="$PROJECT_DIR$/WraithOrchestratorNoMQ.php" scriptParameters="-e=&quot;../debloating_templates/apache_logs/LIM_Coverage/wp_4622_extended_logs_admin_index.txt&quot;  -r ../debloating_templates/wordpress-4.6.22/ -u /var/www/html/wordpress-4.6.22/ -i=&quot;172.31.0.1&quot; --reanimation=&quot;6272eb31927fa&quot; -d">
+    <CommandLine parameters="-dxdebug.client_host=wsl2.host">
+      <PhpTestInterpreterSettings>
+        <option name="interpreterName" value="Ubuntu 18.04" />
+      </PhpTestInterpreterSettings>
+    </CommandLine>
+    <method v="2" />
+  </configuration>
+</component>
