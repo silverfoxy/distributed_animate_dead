@@ -95,7 +95,7 @@ class WraithOrchestratorNoMQ {
                 $cookies = [];
                 foreach ($flows as $log_entry) {
                     $verb = $log_entry['request_method'];
-                    $target_file = $params['root_dir'] . str_replace('/var/www/html/phpMyAdmin-4.7.0-all-languages/', '', $log_entry['script_filename']);
+                    $target_file = $params['root_dir'] . str_replace($params['uri_prefix'], '', $log_entry['script_filename']);
                     // Removing non utf characters
                     array_walk($log_entry['session'], function(&$value, $key) {
                         $value = 'dummy';

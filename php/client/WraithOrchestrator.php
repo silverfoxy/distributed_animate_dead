@@ -28,7 +28,7 @@ class WraithOrchestrator {
         $config_file_path = './animate_dead/config.json';
         $htaccess_bool = Utils::get_htaccess_bool($config_file_path);
         // Connect to RabbitMQ
-        $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $_ENV['RABBITMQ_DEFAULT_USER'], $_ENV['RABBITMQ_DEFAULT_PASS']);
+        $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $_ENV['RABBITMQ_DEFAULT_USER'], $_ENV['RABBITMQ_DEFAULT_PASS'], '/', false, 'AMQPLAIN', null, 'en_US', 300, 300);
         $this->channel = $this->connection->channel();
 
         // Create the queue
@@ -56,14 +56,14 @@ class WraithOrchestrator {
             // Merge coverage info
             $coverage_info = $message_body['coverage_info'] ?? [];
             $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
-            $priority = $this->merge_coverage($coverage_info, $new_branch_coverage);
+            list($priority, $new_coverage, $new_coverage_lookahead) = $this->merge_coverage($coverage_info, $new_branch_coverage);
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
                 $reanimation_state = $message_body;
                 $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
                 $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], count($new_branch_coverage));
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], count($new_branch_coverage), $new_coverage, $new_coverage_lookahead);
             }
             else {
                 // Received a termination task
@@ -80,7 +80,7 @@ class WraithOrchestrator {
             try {
                 $this->channel->wait(null, false, 100);
             }
-            catch (AMQPTimeoutException $exception) {
+            catch (Exception $exception) {
                 echo 'Queue read timeout exception, retrying in 2 seconds...'.PHP_EOL;
                 sleep(2);
             }
@@ -90,7 +90,7 @@ class WraithOrchestrator {
         $this->connection->close();
     }
 
-    protected function log_execution_to_db($task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead=0) {
+    protected function log_execution_to_db($task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead=0, $new_coverage=null, $new_branch_coverage=null) {
         $conn = new mysqli('db', 'root', 'root', 'animatedead_executions');
         if ($conn->connect_error) {
             echo sprintf('Failed to log execution [&s] to database (Connection error).'.PHP_EOL, $task_id);
@@ -103,6 +103,17 @@ class WraithOrchestrator {
         if ($result === false) {
             echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
             echo $conn->error.PHP_EOL;
+        }
+        if ($new_coverage !== null) {
+            $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
+            $new_coverage_json = json_encode($new_coverage);
+            $new_branch_coverage_json = json_encode($new_branch_coverage);
+            $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
+            $result = $query->execute();
+            if ($result === false) {
+                echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
+                echo $conn->error.PHP_EOL;
+            }
         }
     }
 
@@ -124,19 +135,31 @@ class WraithOrchestrator {
     }
 
     protected function merge_coverage($new_coverage_info, $new_branch_coverage=[]) {
-        $base = count($this->overall_coverage_info);
+        // Count overall coverage
+        // $base = count($this->overall_coverage_info, COUNT_RECURSIVE);
+        $base = 1;
         $new_lines = 0;
+        $new_coverage = [];
+        $new_coverage_lookahead = [];
         foreach ($new_coverage_info as $filename => $lines) {
             if (!array_key_exists($filename, $this->overall_coverage_info)) {
                 $this->overall_coverage_info[$filename] = $lines;
+                $new_coverage[$filename] = $lines;
                 $new_lines += sizeof($lines);
             }
             else {
+                // Count new coverage in covered files for which there's new coverage
+                $covered_any_new_lines = false;
                 foreach ($lines as $line => $covered) {
                     if(!array_key_exists($line, $this->overall_coverage_info[$filename])) {
                         $this->overall_coverage_info[$filename][$line] = $covered;
+                        $new_coverage[$filename][$line] = $covered;
                         $new_lines++;
+                        $covered_any_new_lines = true;
                     }
+                }
+                if ($covered_any_new_lines === true) {
+                    $base += count($this->overall_coverage_info[$filename], COUNT_RECURSIVE);
                 }
             }
         }
@@ -144,20 +167,28 @@ class WraithOrchestrator {
         if ($new_branch_coverage !== []) {
             foreach ($new_branch_coverage as $filename => $lines) {
                 if (!array_key_exists($filename, $this->overall_coverage_info)) {
-                    $new_lines += sizeof($lines);
+                    $new_branch_lines += sizeof($lines);
+                    $new_coverage_lookahead[$filename] = $lines;
                 }
                 else {
                     foreach ($lines as $line) {
                         if(!array_key_exists($line, $this->overall_coverage_info[$filename])) {
-                            $new_lines++;
+                            $new_branch_lines++;
+                            $new_coverage_lookahead[$filename][$line] = true;
                         }
                     }
                 }
             }
-            $new_branch_lines = $new_lines;
         }
-
-        return $new_lines+$new_branch_lines >= $base ? 100 : (($new_lines+$new_branch_lines) * 100 / $base);
+        $priority = ($new_lines / $base) * 100 + $new_branch_lines;
+        $priority = min($priority, 100);
+        if ($priority < 1) {
+            if ($new_lines > 0 || $new_branch_lines > 0) {
+                // If any new lines are or will be covered, set the priority to a minimum of 1.
+                return 1;
+            }
+        }
+        return [(int)$priority, $new_coverage, $new_coverage_lookahead];
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id, $htaccess_bool) {
@@ -234,7 +265,7 @@ class WraithOrchestrator {
                 $cookies = [];
                 foreach ($flows as $log_entry) {
                     $verb = $log_entry['request_method'];
-                    $target_file = $params['root_dir'] . str_replace('/var/www/html/phpMyAdmin-4.7.0-all-languages/', '', $log_entry['script_filename']);
+                    $target_file = $params['root_dir'] . str_replace($params['uri_prefix'], '', $log_entry['script_filename']);
                     // Removing non utf characters
                     if (isset($log_entry['session'])) {
                         array_walk($log_entry['session'], function(&$value, $key) {
