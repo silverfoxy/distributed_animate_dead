@@ -1,3 +1,6 @@
-find ./animate_dead/logs -maxdepth 1 -name '*.txt' -delete
-find ./animate_dead/logs/reanimation_logs -maxdepth 1 -name '*.txt' -delete
-find ./animate_dead/logs/error_logs -maxdepth 1 -name '*.txt' -delete
+rm -rf animate_dead/logs
+mkdir animate_dead/logs
+mkdir animate_dead/logs/error_logs
+mkdir animate_dead/logs/line_coverage_logs
+mkdir animate_dead/logs/outputs
+mkdir animate_dead/logs/reanimation_logs
