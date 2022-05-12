@@ -185,7 +185,7 @@ class WraithOrchestrator {
         if ($priority < 1) {
             if ($new_lines > 0 || $new_branch_lines > 0) {
                 // If any new lines are or will be covered, set the priority to a minimum of 1.
-                return 1;
+                $priority = 1;
             }
         }
         return [(int)$priority, $new_coverage, $new_coverage_lookahead];
