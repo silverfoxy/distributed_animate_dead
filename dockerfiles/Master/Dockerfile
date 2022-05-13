@@ -34,4 +34,4 @@ RUN apt-get update && apt-get install -y \
     && pecl install xdebug redis \
     && docker-php-ext-enable xdebug redis
 WORKDIR "/home/ubuntu/client"
-#CMD ["php", "WraithOrchestrator.php", "-d"]
+CMD ["php", "WraithOrchestrator.php", "-d"]
