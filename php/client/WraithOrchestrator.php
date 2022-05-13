@@ -20,6 +20,8 @@ class WraithOrchestrator {
     public $overall_coverage_info = [];
     public $log_filename;
 
+    protected $redis;
+
     public function __construct($argc, $argv) {
         // Load env variables
         $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -27,6 +29,8 @@ class WraithOrchestrator {
         $execution_id = uniqid();
         $config_file_path = './animate_dead/config.json';
         $htaccess_bool = Utils::get_htaccess_bool($config_file_path);
+        $this->redis = new Redis();
+        $this->redis->connect('redis', 6379);
         // Connect to RabbitMQ
         $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $_ENV['RABBITMQ_DEFAULT_USER'], $_ENV['RABBITMQ_DEFAULT_PASS'], '/', false, 'AMQPLAIN', null, 'en_US', 300, 300);
         $this->channel = $this->connection->channel();
@@ -139,48 +143,23 @@ class WraithOrchestrator {
         // $base = count($this->overall_coverage_info, COUNT_RECURSIVE);
         $base = 1;
         $new_lines = 0;
-        $new_coverage = [];
-        $new_coverage_lookahead = [];
+        $total_covered_lines_in_covered_files = 0;
+
         foreach ($new_coverage_info as $filename => $lines) {
-            if (!array_key_exists($filename, $this->overall_coverage_info)) {
-                $this->overall_coverage_info[$filename] = $lines;
-                $new_coverage[$filename] = $lines;
-                $new_lines += sizeof($lines);
-            }
-            else {
-                // Count new coverage in covered files for which there's new coverage
-                $covered_any_new_lines = false;
-                foreach ($lines as $line => $covered) {
-                    if(!array_key_exists($line, $this->overall_coverage_info[$filename])) {
-                        $this->overall_coverage_info[$filename][$line] = $covered;
-                        $new_coverage[$filename][$line] = $covered;
-                        $new_lines++;
-                        $covered_any_new_lines = true;
-                    }
-                }
-                if ($covered_any_new_lines === true) {
-                    $base += count($this->overall_coverage_info[$filename], COUNT_RECURSIVE);
-                }
-            }
+            $new_lines += $this->redis->sAddArray($filename, $lines);
+            $total_covered_lines_in_covered_files = $this->redis->sCard($filename);
         }
         $new_branch_lines = 0;
         if ($new_branch_coverage !== []) {
             foreach ($new_branch_coverage as $filename => $lines) {
-                if (!array_key_exists($filename, $this->overall_coverage_info)) {
-                    $new_branch_lines += sizeof($lines);
-                    $new_coverage_lookahead[$filename] = $lines;
-                }
-                else {
-                    foreach ($lines as $line) {
-                        if(!array_key_exists($line, $this->overall_coverage_info[$filename])) {
-                            $new_branch_lines++;
-                            $new_coverage_lookahead[$filename][$line] = true;
-                        }
+                foreach ($lines as $line) {
+                    if ($this->redis->sIsMember($filename, $line) === false) {
+                        $new_branch_lines++;
                     }
                 }
             }
         }
-        $priority = ($new_lines / $base) * 100 + $new_branch_lines;
+        $priority = ((double)$new_lines / $base) * 100 + $new_branch_lines;
         $priority = min($priority, 100);
         if ($priority < 1) {
             if ($new_lines > 0 || $new_branch_lines > 0) {
@@ -188,7 +167,7 @@ class WraithOrchestrator {
                 $priority = 1;
             }
         }
-        return [(int)$priority, $new_coverage, $new_coverage_lookahead];
+        return [(int)$priority, $new_lines, $new_branch_lines];
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id, $htaccess_bool) {

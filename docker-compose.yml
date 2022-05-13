@@ -99,6 +99,8 @@ services:
         volumes:
             - grafana-storage:/var/lib/grafana
         restart: always
+    redis:
+      image: redis:bullseye
 volumes:
     dbdata:
     grafana-storage:
