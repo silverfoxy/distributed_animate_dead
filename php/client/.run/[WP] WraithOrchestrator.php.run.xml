@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="[WP] WraithOrchestrator.php" type="PhpLocalRunConfigurationType" factoryName="PHP Console" path="$PROJECT_DIR$/WraithOrchestrator.php" scriptParameters="-e=&quot;../debloating_templates/apache_logs/LIM_Coverage/wp_4622_extended_logs_admin_index.txt&quot;  -r ../debloating_templates/wordpress-4.6.22/ -u /var/www/html/wordpress-4.6.22/ -i=&quot;172.31.0.1&quot; --reanimation=&quot;6272eb31927fa&quot; -d">
+  <configuration default="false" name="[WP] WraithOrchestrator.php" type="PhpLocalRunConfigurationType" factoryName="PHP Console" path="$PROJECT_DIR$/WraithOrchestrator.php" scriptParameters="-e=&quot;../debloating_templates/apache_logs/LIM_Coverage/wp_4622_extended_logs_admin_index.txt&quot;  -r ../debloating_templates/wordpress-4.6.22/ -u /var/www/html/wordpress-4.6.22/ -i=&quot;172.31.0.1&quot; --reanimation=&quot;62744844629b8&quot; -d">
     <CommandLine>
       <PhpTestInterpreterSettings>
         <option name="interpreterName" value="debug_worker" />

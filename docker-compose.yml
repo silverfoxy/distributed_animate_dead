@@ -34,6 +34,23 @@ services:
           reservations:
             cpus: "0.25"
             memory: 128M
+      restart: always
+    run:
+      build: dockerfiles/Run
+      tty: true
+      volumes:
+        - ./php/client:/home/ubuntu/client
+        - ./php/analysis:/home/ubuntu/analysis
+        - ./php/debloating_templates:/home/ubuntu/debloating_templates
+      deploy:
+        replicas: 1
+        resources:
+          limits:
+            cpus: "1"
+            memory: 128M
+          reservations:
+            cpus: "0.25"
+            memory: 128M
     worker:
       build: dockerfiles/PHPWorker
       tty: true
