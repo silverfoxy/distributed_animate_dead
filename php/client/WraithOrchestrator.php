@@ -76,7 +76,7 @@ class WraithOrchestrator {
             }
             echo " [+] Done\n";
         };
-        $this->channel->basic_qos(null, 1, null);
+        $this->channel->basic_qos(null, 50, null);
         $this->channel->basic_consume(MANAGER_QUEUE, '', false, true, false, false, $this->callback);
 
         echo " [*] Waiting for messages. To exit press CTRL+C\n";
