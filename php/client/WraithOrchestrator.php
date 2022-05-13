@@ -108,17 +108,17 @@ class WraithOrchestrator {
             echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
             echo $conn->error.PHP_EOL;
         }
-        if ($new_coverage !== null) {
-            $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
-            $new_coverage_json = json_encode($new_coverage);
-            $new_branch_coverage_json = json_encode($new_branch_coverage);
-            $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
-            $result = $query->execute();
-            if ($result === false) {
-                echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
-                echo $conn->error.PHP_EOL;
-            }
-        }
+        // if ($new_coverage !== null) {
+        //     $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
+        //     $new_coverage_json = json_encode($new_coverage);
+        //     $new_branch_coverage_json = json_encode($new_branch_coverage);
+        //     $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
+        //     $result = $query->execute();
+        //     if ($result === false) {
+        //         echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
+        //         echo $conn->error.PHP_EOL;
+        //     }
+        // }
     }
 
     protected function log_job_to_db($execution_id, $log_filename) {
