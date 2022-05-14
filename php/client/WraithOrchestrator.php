@@ -141,13 +141,12 @@ class WraithOrchestrator {
     protected function merge_coverage($new_coverage_info, $new_branch_coverage=[]) {
         // Count overall coverage
         // $base = count($this->overall_coverage_info, COUNT_RECURSIVE);
-        $base = 1;
         $new_lines = 0;
         $total_covered_lines_in_covered_files = 0;
 
         foreach ($new_coverage_info as $filename => $lines) {
-            $new_lines += $this->redis->sAddArray($filename, $lines);
-            $total_covered_lines_in_covered_files = $this->redis->sCard($filename);
+            $new_lines += $this->redis->sAddArray($filename, array_keys($lines));
+            $total_covered_lines_in_covered_files += $this->redis->sCard($filename);
         }
         $new_branch_lines = 0;
         if ($new_branch_coverage !== []) {
@@ -159,7 +158,7 @@ class WraithOrchestrator {
                 }
             }
         }
-        $priority = ((double)$new_lines / $base) * 100 + $new_branch_lines;
+        $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
         $priority = min($priority, 100);
         if ($priority < 1) {
             if ($new_lines > 0 || $new_branch_lines > 0) {

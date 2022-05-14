@@ -26,7 +26,7 @@ services:
           - ./php/analysis:/home/ubuntu/analysis
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
-        replicas: 20
+        replicas: 5
         resources:
           limits:
             cpus: "1"
@@ -59,7 +59,7 @@ services:
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
         mode: replicated
-        replicas: 25
+        replicas: 20
         resources:
           limits:
             cpus: "1"

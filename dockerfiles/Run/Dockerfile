@@ -31,6 +31,6 @@ RUN apt-get update && apt-get install -y \
         # sysvshm \
         # sysvsem \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && pecl install redis \
-    && docker-php-ext-enable redis
+    && pecl install redis xdebug \
+    && docker-php-ext-enable redis xdebug
 WORKDIR "/home/ubuntu/client"
