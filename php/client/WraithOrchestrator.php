@@ -60,7 +60,8 @@ class WraithOrchestrator {
             // Merge coverage info
             $coverage_info = $message_body['coverage_info'] ?? [];
             $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
-            list($priority, $new_coverage, $new_coverage_lookahead) = $this->merge_coverage($coverage_info, $new_branch_coverage);
+            $parent_priority = $message_body['current_priority'] ?? 0;
+            list($priority, $new_coverage, $new_coverage_lookahead) = $this->merge_coverage($coverage_info, $new_branch_coverage, $parent_priority);
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
@@ -108,17 +109,17 @@ class WraithOrchestrator {
             echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
             echo $conn->error.PHP_EOL;
         }
-        // if ($new_coverage !== null) {
-        //     $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
-        //     $new_coverage_json = json_encode($new_coverage);
-        //     $new_branch_coverage_json = json_encode($new_branch_coverage);
-        //     $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
-        //     $result = $query->execute();
-        //     if ($result === false) {
-        //         echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
-        //         echo $conn->error.PHP_EOL;
-        //     }
-        // }
+        if ($new_coverage !== null) {
+            $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
+            $new_coverage_json = json_encode($new_coverage);
+            $new_branch_coverage_json = json_encode($new_branch_coverage);
+            $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
+            $result = $query->execute();
+            if ($result === false) {
+                echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
+                echo $conn->error.PHP_EOL;
+            }
+        }
     }
 
     protected function log_job_to_db($execution_id, $log_filename) {
@@ -138,7 +139,7 @@ class WraithOrchestrator {
         return true;
     }
 
-    protected function merge_coverage($new_coverage_info, $new_branch_coverage=[]) {
+    protected function merge_coverage($new_coverage_info, $new_branch_coverage=[], $parent_priority=0) {
         // Count overall coverage
         // $base = count($this->overall_coverage_info, COUNT_RECURSIVE);
         $new_lines = 0;
@@ -146,7 +147,7 @@ class WraithOrchestrator {
 
         foreach ($new_coverage_info as $filename => $lines) {
             $new_lines += $this->redis->sAddArray($filename, array_keys($lines));
-            $total_covered_lines_in_covered_files += $this->redis->sCard($filename);
+            // $total_covered_lines_in_covered_files += $this->redis->sCard($filename);
         }
         $new_branch_lines = 0;
         if ($new_branch_coverage !== []) {
@@ -158,7 +159,8 @@ class WraithOrchestrator {
                 }
             }
         }
-        $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
+        // $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
+        $priority = $new_lines * 10 + $new_branch_lines + $parent_priority / 2;
         $priority = min($priority, 100);
         if ($priority < 1) {
             if ($new_lines > 0 || $new_branch_lines > 0) {
@@ -228,7 +230,7 @@ class WraithOrchestrator {
                         $init_env['_FILES'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                         if (isset($parameters['reanimation']))  {
-                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false, []);
+                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false, [], 100);
                         }
                         else {
                             $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, false);
@@ -263,7 +265,7 @@ class WraithOrchestrator {
                     $init_env['_FILES'] = $log_entry['files'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     if (isset($params['reanimation']))  {
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true, []);
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true, [], 100);
                     }
                     else {
                         $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, true);
