@@ -225,6 +225,7 @@ class WraithOrchestrator {
                         $init_env['_SERVER']['REQUEST_URI'] = $uri;
                         $init_env['_SERVER']['SCRIPT_FILENAME'] = $target_file;
                         $init_env['_SERVER']['SCRIPT_NAME'] = "/" . basename($target_file);
+                        $init_env['_SERVER']['HTTP_REFERER'] = $log_entry->referer;
                         $init_env['_GET'] = $parameters ?? [];
                         $init_env['_POST'] = [];
                         $init_env['_FILES'] = [];
