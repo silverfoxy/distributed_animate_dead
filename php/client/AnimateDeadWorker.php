@@ -29,8 +29,8 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
         $this->callback = function ($msg) {
             $params = json_decode($msg->body, true);
             echo sprintf(' [+] Received "%s" priority: %d (extended logs: %s)'.PHP_EOL, $msg->get('correlation_id'), $msg->get('priority'), $params['extended_logs_emulation_mode'] ? 'true' : 'false');
-            var_dump($params['extended_logs_emulation_mode']);
-            $coverage_info = start_engine($params['init_env'], $params['httpverb'], $params['targetfile'], $this, $params['reanimation_array'], $msg->get('correlation_id'), $params['execution_id'], 4, $params['extended_logs_emulation_mode']);
+            // var_dump($params['extended_logs_emulation_mode']);
+            $coverage_info = start_engine($params['init_env'], $params['httpverb'], $params['targetfile'], $this, $params['reanimation_array'], $msg->get('correlation_id'), $params['execution_id'], 4, $params['extended_logs_emulation_mode'], $msg->get('priority'));
             $this->add_termination_task($coverage_info, $params['execution_id']);
             echo " [+] Done\n";
             $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
@@ -49,7 +49,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
         echo sprintf(' [%s] Sent the termination info "%s" to the queue [%s].'.PHP_EOL, date("h:i:sa"), $task_id, MANAGER_QUEUE);
     }
 
-    public function add_reanimation_task($init_env, $httpverb, $targetfile, $reanimationarray, $branch_filename, $branch_linenumber, $line_coverage_hash, $symbol_table_hash, $coverage_info, $execution_id, $extended_logs_emulation_mode, $new_branch_coverage=[]) {
+    public function add_reanimation_task($init_env, $httpverb, $targetfile, $reanimationarray, $branch_filename, $branch_linenumber, $line_coverage_hash, $symbol_table_hash, $coverage_info, $execution_id, $extended_logs_emulation_mode, $new_branch_coverage=[], $current_priority=null) {
         $task_id = uniqid();
         // Remove $ini_env['GLOBALS']['GLOBALS'] recursion before json_encode
         unset($init_env['GLOBALS']['GLOBALS']);
@@ -64,7 +64,8 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
                    'coverage_info' => $coverage_info,
                    'execution_id' => $execution_id,
                    'extended_logs_emulation_mode' => $extended_logs_emulation_mode,
-                   'new_branch_coverage' => $new_branch_coverage];
+                   'new_branch_coverage' => $new_branch_coverage,
+                   'current_priority' => $current_priority];
 
         $msg = new AMQPMessage(json_encode($params), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT, 'correlation_id' => $task_id]);
 
