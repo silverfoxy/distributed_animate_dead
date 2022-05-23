@@ -26,10 +26,28 @@ services:
           - ./php/analysis:/home/ubuntu/analysis
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
+        replicas: 5
         resources:
           limits:
             cpus: "1"
             memory: 512M
+          reservations:
+            cpus: "0.25"
+            memory: 128M
+      restart: always
+    run:
+      build: dockerfiles/Run
+      tty: true
+      volumes:
+        - ./php/client:/home/ubuntu/client
+        - ./php/analysis:/home/ubuntu/analysis
+        - ./php/debloating_templates:/home/ubuntu/debloating_templates
+      deploy:
+        replicas: 1
+        resources:
+          limits:
+            cpus: "1"
+            memory: 128M
           reservations:
             cpus: "0.25"
             memory: 128M
@@ -41,7 +59,7 @@ services:
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
         mode: replicated
-        replicas: 4
+        replicas: 20
         resources:
           limits:
             cpus: "1"
@@ -99,6 +117,8 @@ services:
         volumes:
             - grafana-storage:/var/lib/grafana
         restart: always
+    redis:
+      image: redis:bullseye
 volumes:
     dbdata:
     grafana-storage:

@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
         libsqlite3-dev \
         libcurl4-openssl-dev \
         libpng-dev \
-        libonig-dev  \
+        libonig-dev \
     && docker-php-ext-install -j$(nproc) \
         bcmath \
         sockets \
@@ -33,6 +33,4 @@ RUN apt-get update && apt-get install -y \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && pecl install redis xdebug \
     && docker-php-ext-enable redis xdebug
-ADD "php.ini" "/usr/local/etc/php/php.ini"
 WORKDIR "/home/ubuntu/client"
-# CMD ["php", "AnimateDeadWorker.php"]
