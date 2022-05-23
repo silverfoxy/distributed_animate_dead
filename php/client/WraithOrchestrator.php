@@ -260,7 +260,7 @@ class WraithOrchestrator {
             }
             else {
                 $log_file_path = $params['extended_logs'];
-                $flows = parse_extended_logs($log_file_path);
+                $flows = parse_extended_logs($log_file_path, $htaccess_bool);
                 $session_variables = [];
                 $cookies = [];
                 foreach ($flows as $log_entry) {
@@ -277,9 +277,12 @@ class WraithOrchestrator {
                             $value = 'dummy';
                         });
                     }
+                    $uri = $log_entry->path;
+                    echo $uri;
                     $init_env['_SESSION'] = $log_entry['session'] ?? [];
                     $init_env['_COOKIE'] = $log_entry['cookie'] ?? [];
                     $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
+                    $init_env['_SERVER']['REQUEST_URI']= $uri;
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_FILES'] = $log_entry['files'] ?? [];
