@@ -259,7 +259,6 @@ class WraithOrchestrator {
                         });
                     }
                     $uri = $log_entry->path;
-                    echo $uri;
                     $init_env['_SESSION'] = $log_entry['session'] ?? [];
                     $init_env['_COOKIE'] = $log_entry['cookie'] ?? [];
                     $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
