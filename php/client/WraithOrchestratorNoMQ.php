@@ -81,8 +81,8 @@ class WraithOrchestratorNoMQ {
                         $init_env['_COOKIE'] = [];
                         $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
                         $init_env['_SERVER']['REQUEST_URI'] = $uri;
-                        $init_env['_SERVER']['SCRIPT_FILENAME'] = $target_file;
-                        $init_env['_SERVER']['SCRIPT_NAME'] = "/" . basename($target_file);
+                        $init_env['_SERVER']['SCRIPT_FILENAME'] = $init_env['_SERVER']['PHP_SELF'] = $target_file;
+                        $init_env['_SERVER']['SCRIPT_NAME'] = $init_env['_SERVER']['SCRIPT_FILENAME'] = $init_env['_SERVER']['PATH_TRANSLATED'] = "/" . basename($target_file);
                         $init_env['_GET'] = $parameters ?? [];
                         $init_env['_POST'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
@@ -110,6 +110,8 @@ class WraithOrchestratorNoMQ {
                     $init_env['_SESSION'] = $log_entry['session'] ?? [];
                     $init_env['_COOKIE'] = $log_entry['cookie'] ?? [];
                     $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
+                    $init_env['_SERVER']['SCRIPT_FILENAME'] = $init_env['_SERVER']['PHP_SELF'] = $target_file;
+                    $init_env['_SERVER']['SCRIPT_NAME'] = $init_env['_SERVER']['SCRIPT_FILENAME'] = $init_env['_SERVER']['PATH_TRANSLATED'] = "/" . basename($target_file);
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_FILES'] = $log_entry['files'] ?? [];
