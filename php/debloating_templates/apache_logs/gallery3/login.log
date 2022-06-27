@@ -1,2 +1,0 @@
-172.21.0.1 - - [04/May/2021:16:18:23 +0000] "GET /gallery3/index.php/login/ajax HTTP/1.1" 200 1576 "http://localhost:8085/gallery3/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
-172.21.0.1 - - [04/May/2021:16:18:32 +0000] "POST /gallery3/index.php/login/auth_ajax HTTP/1.1" 200 927 "http://localhost:8085/gallery3/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/53
