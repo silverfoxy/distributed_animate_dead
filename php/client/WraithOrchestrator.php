@@ -64,7 +64,7 @@ class WraithOrchestrator {
             list($priority, $new_coverage, $new_coverage_lookahead) = $this->merge_coverage($coverage_info, $new_branch_coverage, $parent_priority);
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 // Received a reanimation task
-                echo sprintf(' [%s] Received reanimation state.', date("h:i:sa")), PHP_EOL;
+                echo sprintf(' [%s] Received reanimation state for %s.', date("h:i:sa")), $message_body['execution_id'], PHP_EOL;
                 $reanimation_state = $message_body;
                 $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
                 $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
@@ -72,7 +72,7 @@ class WraithOrchestrator {
             }
             else {
                 // Received a termination task
-                echo sprintf(' [%s] Received termination info (%d %% new coverage).', date("h:i:sa"), $priority), PHP_EOL;
+                echo sprintf(' [%s] Received termination info for %s (%d priority).', date("h:i:sa"), $message_body['execution_id'], $priority), PHP_EOL;
                 $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  0);
             }
             echo " [+] Done\n";
