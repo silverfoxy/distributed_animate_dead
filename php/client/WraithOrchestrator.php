@@ -61,19 +61,20 @@ class WraithOrchestrator {
             $coverage_info = $message_body['coverage_info'] ?? [];
             $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
             $parent_priority = $message_body['current_priority'] ?? 0;
-            list($priority, $new_coverage, $new_coverage_lookahead) = $this->merge_coverage($coverage_info, $new_branch_coverage, $parent_priority);
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
+                list($priority, $new_files, $new_lines, $lookahead) = $this->merge_coverage('reanimations', $coverage_info, $new_branch_coverage, $parent_priority);
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state for %s.', date("h:i:sa"), $message_body['execution_id'] ?? 'none'), PHP_EOL;
                 $reanimation_state = $message_body;
                 $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
                 $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], count($new_branch_coverage), $new_coverage, $new_coverage_lookahead);
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], $lookahead, $new_files, $new_lines);
             }
             else {
                 // Received a termination task
+                list($priority, $new_files, $new_lines, $lookahead) = $this->merge_coverage('terminations', $coverage_info, $new_branch_coverage, $parent_priority);
                 echo sprintf(' [%s] Received termination info for %s (%d priority).', date("h:i:sa"), $message_body['execution_id'] ?? 'none', $priority), PHP_EOL;
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  0);
+                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  $lookahead, $new_files, $new_lines);
             }
             echo " [+] Done\n";
         };
@@ -95,31 +96,31 @@ class WraithOrchestrator {
         $this->connection->close();
     }
 
-    protected function log_execution_to_db($task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead=0, $new_coverage=null, $new_branch_coverage=null) {
+    protected function log_execution_to_db($task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines) {
         $conn = new mysqli('db', 'root', 'root', 'animatedead_executions');
         if ($conn->connect_error) {
             echo sprintf('Failed to log execution [&s] to database (Connection error).'.PHP_EOL, $task_id);
             echo $conn->error.PHP_EOL;
             return;
         }
-        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, termination, branch_filename, branch_linenumber, lookahead_coverage) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $query->bind_param("sisisii", $task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead);
+        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, termination, branch_filename, branch_linenumber, lookahead_coverage, new_files, new_lines) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $query->bind_param("sisisiiii", $task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines);
         $result = $query->execute();
         if ($result === false) {
             echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
             echo $conn->error.PHP_EOL;
         }
-        if ($new_coverage !== null) {
-            $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
-            $new_coverage_json = json_encode($new_coverage);
-            $new_branch_coverage_json = json_encode($new_branch_coverage);
-            $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
-            $result = $query->execute();
-            if ($result === false) {
-                echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
-                echo $conn->error.PHP_EOL;
-            }
-        }
+        // if ($new_lines !== null) {
+        //     $query = $conn->prepare("INSERT INTO debug (filename, linenumber, priority, new_coverage, new_branch_coverage) VALUES (?, ?, ?, ?, ?)");
+        //     $new_coverage_json = json_encode($new_lines);
+        //     $new_branch_coverage_json = json_encode($new_branch_coverage);
+        //     $query->bind_param("siiss", $branch_filename, $branch_linenumber, $priority, $new_coverage_json, $new_branch_coverage_json);
+        //     $result = $query->execute();
+        //     if ($result === false) {
+        //         echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
+        //         echo $conn->error.PHP_EOL;
+        //     }
+        // }
     }
 
     protected function log_job_to_db($execution_id, $log_filename) {
@@ -139,21 +140,31 @@ class WraithOrchestrator {
         return true;
     }
 
-    protected function merge_coverage($new_coverage_info, $new_branch_coverage=[], $parent_priority=0) {
+    /**
+     * @param string $datastore value from ['reanimations', 'terminations']
+     * @param array $new_coverage_info
+     * @param array $new_branch_coverage
+     * @param int $parent_priority
+     * @return array
+     */
+    protected function merge_coverage(string $datastore, array $new_coverage_info, array $new_branch_coverage = [], int $parent_priority = 0) {
         // Count overall coverage
-        // $base = count($this->overall_coverage_info, COUNT_RECURSIVE);
+        $new_files = 0;
         $new_lines = 0;
-        $total_covered_lines_in_covered_files = 0;
 
         foreach ($new_coverage_info as $filename => $lines) {
-            $new_lines += $this->redis->sAddArray($filename, array_keys($lines));
+            $line_count = $this->redis->sAddArray("{$datastore}_{$filename}", array_keys($lines));;
+            $new_lines += $line_count;
+            if ($line_count > 0) {
+                $new_files++;
+            }
             // $total_covered_lines_in_covered_files += $this->redis->sCard($filename);
         }
         $new_branch_lines = 0;
         if ($new_branch_coverage !== []) {
             foreach ($new_branch_coverage as $filename => $lines) {
                 foreach ($lines as $line) {
-                    if ($this->redis->sIsMember($filename, $line) === false) {
+                    if ($this->redis->sIsMember("{$datastore}_{$filename}", $line) === false) {
                         $new_branch_lines++;
                     }
                 }
@@ -168,7 +179,9 @@ class WraithOrchestrator {
                 $priority = 1;
             }
         }
-        return [(int)$priority, $new_lines, $new_branch_lines];
+        $lookahead = $new_branch_lines;
+
+        return [(int)$priority, $new_files, $new_lines, $lookahead];
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id, $htaccess_bool) {
