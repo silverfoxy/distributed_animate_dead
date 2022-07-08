@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.0
+-- version 5.1.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Jul 10, 2021 at 03:01 AM
--- Server version: 8.0.23
--- PHP Version: 7.4.16
+-- Generation Time: Jul 05, 2022 at 07:19 PM
+-- Server version: 8.0.25
+-- PHP Version: 7.4.20
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -57,6 +57,39 @@ CREATE TABLE `alert` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `alert_configuration`
+--
+
+DROP TABLE IF EXISTS `alert_configuration`;
+CREATE TABLE `alert_configuration` (
+  `id` bigint NOT NULL,
+  `alertmanager_configuration` mediumtext COLLATE utf8mb4_unicode_ci,
+  `configuration_version` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` int NOT NULL,
+  `default` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `alert_instance`
+--
+
+DROP TABLE IF EXISTS `alert_instance`;
+CREATE TABLE `alert_instance` (
+  `rule_org_id` bigint NOT NULL,
+  `rule_uid` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `labels` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `labels_hash` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `current_state` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `current_state_since` bigint NOT NULL,
+  `last_eval_time` bigint NOT NULL,
+  `current_state_end` bigint NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `alert_notification`
 --
 
@@ -98,6 +131,32 @@ CREATE TABLE `alert_notification_state` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `alert_rule`
+--
+
+DROP TABLE IF EXISTS `alert_rule`;
+CREATE TABLE `alert_rule` (
+  `id` bigint NOT NULL,
+  `org_id` bigint NOT NULL,
+  `title` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `condition` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data` mediumtext COLLATE utf8mb4_unicode_ci,
+  `updated` datetime NOT NULL,
+  `interval_seconds` bigint NOT NULL DEFAULT '60',
+  `version` int NOT NULL DEFAULT '0',
+  `uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
+  `namespace_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `rule_group` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `no_data_state` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NoData',
+  `exec_err_state` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Alerting',
+  `for` bigint NOT NULL DEFAULT '0',
+  `annotations` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `labels` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `alert_rule_tag`
 --
 
@@ -106,6 +165,34 @@ CREATE TABLE `alert_rule_tag` (
   `id` bigint NOT NULL,
   `alert_id` bigint NOT NULL,
   `tag_id` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `alert_rule_version`
+--
+
+DROP TABLE IF EXISTS `alert_rule_version`;
+CREATE TABLE `alert_rule_version` (
+  `id` bigint NOT NULL,
+  `rule_org_id` bigint NOT NULL,
+  `rule_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
+  `rule_namespace_uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `rule_group` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `parent_version` int NOT NULL,
+  `restored_from` int NOT NULL,
+  `version` int NOT NULL,
+  `created` datetime NOT NULL,
+  `title` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `condition` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data` mediumtext COLLATE utf8mb4_unicode_ci,
+  `interval_seconds` bigint NOT NULL,
+  `no_data_state` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NoData',
+  `exec_err_state` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Alerting',
+  `for` bigint NOT NULL DEFAULT '0',
+  `annotations` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `labels` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -214,7 +301,7 @@ CREATE TABLE `dashboard` (
 --
 
 INSERT INTO `dashboard` (`id`, `version`, `slug`, `title`, `data`, `org_id`, `created`, `updated`, `updated_by`, `created_by`, `gnet_id`, `plugin_id`, `folder_id`, `is_folder`, `has_acl`, `uid`) VALUES
-(1, 10, 'executions', 'Executions', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1622209398159,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fieldConfig\":{\"defaults\":{},\"overrides\":[]},\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"7.5.4\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]},\"unit\":\"short\"},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"7.5.4\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"30m\",\"schemaVersion\":27,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":10}', 1, '2021-05-27 15:38:40', '2021-05-28 15:18:17', 1, 1, 0, '', 0, 0, 0, 'h8X96w3Mk');
+(1, 11, 'executions', 'Executions', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1657047981792,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"8.0.5\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]},\"unit\":\"short\"},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"8.0.5\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'0\'\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"\",\"schemaVersion\":30,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":11}', 1, '2021-05-27 15:38:40', '2022-07-05 19:14:41', 1, 1, 0, '', 0, 0, 0, 'h8X96w3Mk');
 
 -- --------------------------------------------------------
 
@@ -330,7 +417,8 @@ INSERT INTO `dashboard_version` (`id`, `dashboard_id`, `parent_version`, `restor
 (11, 1, 7, 0, 8, '2021-05-28 15:16:09', 1, '', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1622209398159,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fieldConfig\":{\"defaults\":{},\"overrides\":[]},\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"7.5.4\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]}},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"7.5.4\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"30m\",\"schemaVersion\":27,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":8}'),
 (12, 1, 8, 0, 9, '2021-05-28 15:18:13', 1, '', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1622209398159,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fieldConfig\":{\"defaults\":{},\"overrides\":[]},\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"7.5.4\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]},\"unit\":\"short\"},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"7.5.4\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"30m\",\"schemaVersion\":27,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":9}');
 INSERT INTO `dashboard_version` (`id`, `dashboard_id`, `parent_version`, `restored_from`, `version`, `created`, `created_by`, `message`, `data`) VALUES
-(13, 1, 9, 0, 10, '2021-05-28 15:18:17', 1, '', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1622209398159,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fieldConfig\":{\"defaults\":{},\"overrides\":[]},\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"7.5.4\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]},\"unit\":\"short\"},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"7.5.4\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"30m\",\"schemaVersion\":27,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":10}');
+(13, 1, 9, 0, 10, '2021-05-28 15:18:17', 1, '', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1622209398159,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fieldConfig\":{\"defaults\":{},\"overrides\":[]},\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"7.5.4\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]},\"unit\":\"short\"},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"7.5.4\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  priority = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"30m\",\"schemaVersion\":27,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tags\":[],\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":10}'),
+(14, 1, 10, 0, 11, '2022-07-05 19:14:41', 1, '', '{\"annotations\":{\"list\":[{\"builtIn\":1,\"datasource\":\"-- Grafana --\",\"enable\":true,\"hide\":true,\"iconColor\":\"rgba(0, 211, 255, 1)\",\"name\":\"Annotations \\u0026 Alerts\",\"type\":\"dashboard\"}]},\"editable\":true,\"gnetId\":null,\"graphTooltip\":0,\"id\":1,\"iteration\":1657047981792,\"links\":[],\"panels\":[{\"aliasColors\":{},\"bars\":false,\"dashLength\":10,\"dashes\":false,\"datasource\":null,\"fill\":1,\"fillGradient\":0,\"gridPos\":{\"h\":8,\"w\":24,\"x\":0,\"y\":0},\"hiddenSeries\":false,\"id\":2,\"legend\":{\"avg\":false,\"current\":false,\"max\":false,\"min\":false,\"show\":true,\"total\":false,\"values\":false},\"lines\":false,\"linewidth\":1,\"nullPointMode\":\"null\",\"options\":{\"alertThreshold\":true},\"percentage\":false,\"pluginVersion\":\"8.0.5\",\"pointradius\":1,\"points\":true,\"renderer\":\"flot\",\"seriesOverrides\":[],\"spaceLength\":10,\"stack\":false,\"steppedLine\":false,\"targets\":[{\"format\":\"time_series\",\"group\":[],\"hide\":false,\"metricColumn\":\"none\",\"rawQuery\":false,\"rawSql\":\"SELECT\\n  timestamp AS \\\"time\\\",\\n  priority\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  fk_task_execution_id IN ($Logs)\\nORDER BY timestamp\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"}]}],\"thresholds\":[],\"timeFrom\":null,\"timeRegions\":[],\"timeShift\":null,\"title\":\"Job Priorities\",\"tooltip\":{\"shared\":true,\"sort\":0,\"value_type\":\"individual\"},\"type\":\"graph\",\"xaxis\":{\"buckets\":null,\"mode\":\"time\",\"name\":null,\"show\":true,\"values\":[]},\"yaxes\":[{\"$$hashKey\":\"object:156\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":true},{\"$$hashKey\":\"object:157\",\"format\":\"short\",\"label\":null,\"logBase\":1,\"max\":null,\"min\":null,\"show\":false}],\"yaxis\":{\"align\":false,\"alignLevel\":null}},{\"datasource\":null,\"fieldConfig\":{\"defaults\":{\"color\":{\"mode\":\"thresholds\"},\"mappings\":[],\"thresholds\":{\"mode\":\"absolute\",\"steps\":[{\"color\":\"green\",\"value\":null},{\"color\":\"red\",\"value\":80}]},\"unit\":\"short\"},\"overrides\":[]},\"gridPos\":{\"h\":5,\"w\":20,\"x\":2,\"y\":8},\"id\":4,\"options\":{\"colorMode\":\"value\",\"graphMode\":\"area\",\"justifyMode\":\"auto\",\"orientation\":\"auto\",\"reduceOptions\":{\"calcs\":[\"lastNotNull\"],\"fields\":\"\",\"values\":false},\"text\":{},\"textMode\":\"auto\"},\"pluginVersion\":\"8.0.5\",\"targets\":[{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"A\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Termination) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines = 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'1\'\",\"refId\":\"B\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage \\u003e 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines \\u003e 0 AND\\n  fk_task_execution_id IN ($Logs) AND\\n  termination = \'0\'\",\"refId\":\"C\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]},{\"format\":\"table\",\"group\":[{\"params\":[\"id\"],\"type\":\"column\"}],\"hide\":false,\"metricColumn\":\"id\",\"rawQuery\":true,\"rawSql\":\"SELECT\\n  count(id) AS \\\"(Reanimation) New Coverage = 0\\\"\\nFROM executions\\nWHERE\\n  $__timeFilter(timestamp) AND\\n  new_files + new_lines = 0 AND\\n  fk_task_execution_id IN ($Logs)\",\"refId\":\"D\",\"select\":[[{\"params\":[\"priority\"],\"type\":\"column\"},{\"params\":[\"priority\"],\"type\":\"alias\"}]],\"table\":\"executions\",\"timeColumn\":\"timestamp\",\"timeColumnType\":\"timestamp\",\"where\":[{\"name\":\"$__timeFilter\",\"params\":[],\"type\":\"macro\"},{\"datatype\":\"int\",\"name\":\"\",\"params\":[\"priority\",\"\\u003e\",\"0\"],\"type\":\"expression\"},{\"datatype\":\"varchar\",\"name\":\"\",\"params\":[\"fk_task_execution_id\",\"IN\",\"($Logs)\"],\"type\":\"expression\"},{\"datatype\":\"tinyint\",\"name\":\"\",\"params\":[\"termination\",\"=\",\"\'1\'\"],\"type\":\"expression\"}]}],\"title\":\"Finished Execution Coverage\",\"type\":\"stat\"}],\"refresh\":\"\",\"schemaVersion\":30,\"style\":\"dark\",\"tags\":[],\"templating\":{\"list\":[{\"allValue\":null,\"current\":{\"selected\":false,\"text\":\"All\",\"value\":\"$__all\"},\"datasource\":null,\"definition\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"description\":null,\"error\":null,\"hide\":0,\"includeAll\":true,\"label\":\"Logs\",\"multi\":true,\"name\":\"Logs\",\"options\":[],\"query\":\"SELECT concat(log_filename, \\\"_\\\", timestamp) as \\\"__text\\\", execution_id as \\\"__value\\\" from jobs\",\"refresh\":2,\"regex\":\"\",\"skipUrlSync\":false,\"sort\":1,\"tagValuesQuery\":\"\",\"tagsQuery\":\"\",\"type\":\"query\",\"useTags\":false}]},\"time\":{\"from\":\"now-6h\",\"to\":\"now\"},\"timepicker\":{},\"timezone\":\"\",\"title\":\"Executions\",\"uid\":\"h8X96w3Mk\",\"version\":11}');
 
 -- --------------------------------------------------------
 
@@ -369,6 +457,46 @@ CREATE TABLE `data_source` (
 
 INSERT INTO `data_source` (`id`, `org_id`, `version`, `type`, `name`, `access`, `url`, `password`, `user`, `database`, `basic_auth`, `basic_auth_user`, `basic_auth_password`, `is_default`, `json_data`, `created`, `updated`, `with_credentials`, `secure_json_data`, `read_only`, `uid`) VALUES
 (1, 1, 2, 'mysql', 'MySQL', 'proxy', 'db', '', 'root', 'animatedead_executions', 0, '', '', 1, '{}', '2021-05-27 15:15:49', '2021-05-27 15:20:54', 0, '{\"password\":\"NENhQ3Ayd1Ak4ImfQS5Ourk5y6k6kho6bNpiUw==\"}', 0, 'tVg-qQqGz');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `library_element`
+--
+
+DROP TABLE IF EXISTS `library_element`;
+CREATE TABLE `library_element` (
+  `id` bigint NOT NULL,
+  `org_id` bigint NOT NULL,
+  `folder_id` bigint NOT NULL,
+  `uid` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kind` bigint NOT NULL,
+  `type` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created` datetime NOT NULL,
+  `created_by` bigint NOT NULL,
+  `updated` datetime NOT NULL,
+  `updated_by` bigint NOT NULL,
+  `version` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `library_element_connection`
+--
+
+DROP TABLE IF EXISTS `library_element_connection`;
+CREATE TABLE `library_element_connection` (
+  `id` bigint NOT NULL,
+  `element_id` bigint NOT NULL,
+  `kind` bigint NOT NULL,
+  `connection_id` bigint NOT NULL,
+  `created` datetime NOT NULL,
+  `created_by` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -684,7 +812,58 @@ INSERT INTO `migration_log` (`id`, `migration_id`, `sql`, `success`, `error`, `t
 (276, 'create cache_data table', 'CREATE TABLE IF NOT EXISTS `cache_data` (\n`cache_key` VARCHAR(168) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `data` BLOB NOT NULL\n, `expires` INTEGER(255) NOT NULL\n, `created_at` INTEGER(255) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2021-05-25 22:23:20'),
 (277, 'add unique index cache_data.cache_key', 'CREATE UNIQUE INDEX `UQE_cache_data_cache_key` ON `cache_data` (`cache_key`);', 1, '', '2021-05-25 22:23:20'),
 (278, 'create short_url table v1', 'CREATE TABLE IF NOT EXISTS `short_url` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `org_id` BIGINT(20) NOT NULL\n, `uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `path` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `created_by` INT NOT NULL\n, `created_at` INT NOT NULL\n, `last_seen_at` INT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2021-05-25 22:23:21'),
-(279, 'add index short_url.org_id-uid', 'CREATE UNIQUE INDEX `UQE_short_url_org_id_uid` ON `short_url` (`org_id`,`uid`);', 1, '', '2021-05-25 22:23:21');
+(279, 'add index short_url.org_id-uid', 'CREATE UNIQUE INDEX `UQE_short_url_org_id_uid` ON `short_url` (`org_id`,`uid`);', 1, '', '2021-05-25 22:23:21'),
+(280, 'delete alert_definition table', 'DROP TABLE IF EXISTS `alert_definition`', 1, '', '2022-07-05 19:05:16'),
+(281, 'recreate alert_definition table', 'CREATE TABLE IF NOT EXISTS `alert_definition` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `org_id` BIGINT(20) NOT NULL\n, `title` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `condition` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `updated` DATETIME NOT NULL\n, `interval_seconds` BIGINT(20) NOT NULL DEFAULT 60\n, `version` INT NOT NULL DEFAULT 0\n, `uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 0\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:16'),
+(282, 'add index in alert_definition on org_id and title columns', 'CREATE INDEX `IDX_alert_definition_org_id_title` ON `alert_definition` (`org_id`,`title`);', 1, '', '2022-07-05 19:05:16'),
+(283, 'add index in alert_definition on org_id and uid columns', 'CREATE INDEX `IDX_alert_definition_org_id_uid` ON `alert_definition` (`org_id`,`uid`);', 1, '', '2022-07-05 19:05:16'),
+(284, 'alter alert_definition table data column to mediumtext in mysql', 'ALTER TABLE alert_definition MODIFY data MEDIUMTEXT;', 1, '', '2022-07-05 19:05:16'),
+(285, 'drop index in alert_definition on org_id and title columns', 'DROP INDEX `IDX_alert_definition_org_id_title` ON `alert_definition`', 1, '', '2022-07-05 19:05:16'),
+(286, 'drop index in alert_definition on org_id and uid columns', 'DROP INDEX `IDX_alert_definition_org_id_uid` ON `alert_definition`', 1, '', '2022-07-05 19:05:16'),
+(287, 'add unique index in alert_definition on org_id and title columns', 'CREATE UNIQUE INDEX `UQE_alert_definition_org_id_title` ON `alert_definition` (`org_id`,`title`);', 1, '', '2022-07-05 19:05:16'),
+(288, 'add unique index in alert_definition on org_id and uid columns', 'CREATE UNIQUE INDEX `UQE_alert_definition_org_id_uid` ON `alert_definition` (`org_id`,`uid`);', 1, '', '2022-07-05 19:05:16'),
+(289, 'Add column paused in alert_definition', 'alter table `alert_definition` ADD COLUMN `paused` TINYINT(1) NOT NULL DEFAULT 0 ', 1, '', '2022-07-05 19:05:16'),
+(290, 'drop alert_definition table', 'DROP TABLE IF EXISTS `alert_definition`', 1, '', '2022-07-05 19:05:16'),
+(291, 'delete alert_definition_version table', 'DROP TABLE IF EXISTS `alert_definition_version`', 1, '', '2022-07-05 19:05:16'),
+(292, 'recreate alert_definition_version table', 'CREATE TABLE IF NOT EXISTS `alert_definition_version` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `alert_definition_id` BIGINT(20) NOT NULL\n, `alert_definition_uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 0\n, `parent_version` INT NOT NULL\n, `restored_from` INT NOT NULL\n, `version` INT NOT NULL\n, `created` DATETIME NOT NULL\n, `title` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `condition` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `interval_seconds` BIGINT(20) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:16'),
+(293, 'add index in alert_definition_version table on alert_definition_id and version columns', 'CREATE UNIQUE INDEX `UQE_alert_definition_version_alert_definition_id_version` ON `alert_definition_version` (`alert_definition_id`,`version`);', 1, '', '2022-07-05 19:05:16'),
+(294, 'add index in alert_definition_version table on alert_definition_uid and version columns', 'CREATE UNIQUE INDEX `UQE_alert_definition_version_alert_definition_uid_version` ON `alert_definition_version` (`alert_definition_uid`,`version`);', 1, '', '2022-07-05 19:05:16'),
+(295, 'alter alert_definition_version table data column to mediumtext in mysql', 'ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;', 1, '', '2022-07-05 19:05:16'),
+(296, 'drop alert_definition_version table', 'DROP TABLE IF EXISTS `alert_definition_version`', 1, '', '2022-07-05 19:05:16'),
+(297, 'create alert_instance table', 'CREATE TABLE IF NOT EXISTS `alert_instance` (\n`def_org_id` BIGINT(20) NOT NULL\n, `def_uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 0\n, `labels` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `labels_hash` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `current_state` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `current_state_since` BIGINT(20) NOT NULL\n, `last_eval_time` BIGINT(20) NOT NULL\n, PRIMARY KEY ( `def_org_id`,`def_uid`,`labels_hash` )) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:16'),
+(298, 'add index in alert_instance table on def_org_id, def_uid and current_state columns', 'CREATE INDEX `IDX_alert_instance_def_org_id_def_uid_current_state` ON `alert_instance` (`def_org_id`,`def_uid`,`current_state`);', 1, '', '2022-07-05 19:05:16'),
+(299, 'add index in alert_instance table on def_org_id, current_state columns', 'CREATE INDEX `IDX_alert_instance_def_org_id_current_state` ON `alert_instance` (`def_org_id`,`current_state`);', 1, '', '2022-07-05 19:05:16'),
+(300, 'add column current_state_end to alert_instance', 'alter table `alert_instance` ADD COLUMN `current_state_end` BIGINT(20) NOT NULL DEFAULT 0 ', 1, '', '2022-07-05 19:05:16'),
+(301, 'remove index def_org_id, def_uid, current_state on alert_instance', 'DROP INDEX `IDX_alert_instance_def_org_id_def_uid_current_state` ON `alert_instance`', 1, '', '2022-07-05 19:05:16'),
+(302, 'remove index def_org_id, current_state on alert_instance', 'DROP INDEX `IDX_alert_instance_def_org_id_current_state` ON `alert_instance`', 1, '', '2022-07-05 19:05:16'),
+(303, 'rename def_org_id to rule_org_id in alert_instance', 'ALTER TABLE alert_instance CHANGE def_org_id rule_org_id BIGINT;', 1, '', '2022-07-05 19:05:16'),
+(304, 'rename def_uid to rule_uid in alert_instance', 'ALTER TABLE alert_instance CHANGE def_uid rule_uid VARCHAR(40);', 1, '', '2022-07-05 19:05:16'),
+(305, 'add index rule_org_id, rule_uid, current_state on alert_instance', 'CREATE INDEX `IDX_alert_instance_rule_org_id_rule_uid_current_state` ON `alert_instance` (`rule_org_id`,`rule_uid`,`current_state`);', 1, '', '2022-07-05 19:05:16'),
+(306, 'add index rule_org_id, current_state on alert_instance', 'CREATE INDEX `IDX_alert_instance_rule_org_id_current_state` ON `alert_instance` (`rule_org_id`,`current_state`);', 1, '', '2022-07-05 19:05:16'),
+(307, 'create alert_rule table', 'CREATE TABLE IF NOT EXISTS `alert_rule` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `org_id` BIGINT(20) NOT NULL\n, `title` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `condition` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `updated` DATETIME NOT NULL\n, `interval_seconds` BIGINT(20) NOT NULL DEFAULT 60\n, `version` INT NOT NULL DEFAULT 0\n, `uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 0\n, `namespace_uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `rule_group` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `no_data_state` VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT \'NoData\'\n, `exec_err_state` VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT \'Alerting\'\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:17'),
+(308, 'add index in alert_rule on org_id and title columns', 'CREATE UNIQUE INDEX `UQE_alert_rule_org_id_title` ON `alert_rule` (`org_id`,`title`);', 1, '', '2022-07-05 19:05:17'),
+(309, 'add index in alert_rule on org_id and uid columns', 'CREATE UNIQUE INDEX `UQE_alert_rule_org_id_uid` ON `alert_rule` (`org_id`,`uid`);', 1, '', '2022-07-05 19:05:17'),
+(310, 'add index in alert_rule on org_id, namespace_uid, group_uid columns', 'CREATE INDEX `IDX_alert_rule_org_id_namespace_uid_rule_group` ON `alert_rule` (`org_id`,`namespace_uid`,`rule_group`);', 1, '', '2022-07-05 19:05:17'),
+(311, 'alter alert_rule table data column to mediumtext in mysql', 'ALTER TABLE alert_rule MODIFY data MEDIUMTEXT;', 1, '', '2022-07-05 19:05:17'),
+(312, 'add column for to alert_rule', 'alter table `alert_rule` ADD COLUMN `for` BIGINT(20) NOT NULL DEFAULT 0 ', 1, '', '2022-07-05 19:05:17'),
+(313, 'add column annotations to alert_rule', 'alter table `alert_rule` ADD COLUMN `annotations` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ', 1, '', '2022-07-05 19:05:17'),
+(314, 'add column labels to alert_rule', 'alter table `alert_rule` ADD COLUMN `labels` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ', 1, '', '2022-07-05 19:05:17'),
+(315, 'remove unique index from alert_rule on org_id, title columns', 'DROP INDEX `UQE_alert_rule_org_id_title` ON `alert_rule`', 1, '', '2022-07-05 19:05:17'),
+(316, 'add index in alert_rule on org_id, namespase_uid and title columns', 'CREATE UNIQUE INDEX `UQE_alert_rule_org_id_namespace_uid_title` ON `alert_rule` (`org_id`,`namespace_uid`,`title`);', 1, '', '2022-07-05 19:05:17'),
+(317, 'create alert_rule_version table', 'CREATE TABLE IF NOT EXISTS `alert_rule_version` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `rule_org_id` BIGINT(20) NOT NULL\n, `rule_uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 0\n, `rule_namespace_uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `rule_group` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `parent_version` INT NOT NULL\n, `restored_from` INT NOT NULL\n, `version` INT NOT NULL\n, `created` DATETIME NOT NULL\n, `title` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `condition` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `data` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `interval_seconds` BIGINT(20) NOT NULL\n, `no_data_state` VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT \'NoData\'\n, `exec_err_state` VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT \'Alerting\'\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:17'),
+(318, 'add index in alert_rule_version table on rule_org_id, rule_uid and version columns', 'CREATE UNIQUE INDEX `UQE_alert_rule_version_rule_org_id_rule_uid_version` ON `alert_rule_version` (`rule_org_id`,`rule_uid`,`version`);', 1, '', '2022-07-05 19:05:17'),
+(319, 'add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns', 'CREATE INDEX `IDX_alert_rule_version_rule_org_id_rule_namespace_uid_rule_group` ON `alert_rule_version` (`rule_org_id`,`rule_namespace_uid`,`rule_group`);', 1, '', '2022-07-05 19:05:17'),
+(320, 'alter alert_rule_version table data column to mediumtext in mysql', 'ALTER TABLE alert_rule_version MODIFY data MEDIUMTEXT;', 1, '', '2022-07-05 19:05:17'),
+(321, 'add column for to alert_rule_version', 'alter table `alert_rule_version` ADD COLUMN `for` BIGINT(20) NOT NULL DEFAULT 0 ', 1, '', '2022-07-05 19:05:17'),
+(322, 'add column annotations to alert_rule_version', 'alter table `alert_rule_version` ADD COLUMN `annotations` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ', 1, '', '2022-07-05 19:05:17'),
+(323, 'add column labels to alert_rule_version', 'alter table `alert_rule_version` ADD COLUMN `labels` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ', 1, '', '2022-07-05 19:05:17'),
+(324, 'create_alert_configuration_table', 'CREATE TABLE IF NOT EXISTS `alert_configuration` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `alertmanager_configuration` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `configuration_version` VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `created_at` INT NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:17'),
+(325, 'Add column default in alert_configuration', 'alter table `alert_configuration` ADD COLUMN `default` TINYINT(1) NOT NULL DEFAULT 0 ', 1, '', '2022-07-05 19:05:17'),
+(326, 'alert alert_configuration alertmanager_configuration column from TEXT to MEDIUMTEXT if mysql', 'ALTER TABLE alert_configuration MODIFY alertmanager_configuration MEDIUMTEXT;', 1, '', '2022-07-05 19:05:17'),
+(327, 'create library_element table v1', 'CREATE TABLE IF NOT EXISTS `library_element` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `org_id` BIGINT(20) NOT NULL\n, `folder_id` BIGINT(20) NOT NULL\n, `uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `name` VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `kind` BIGINT(20) NOT NULL\n, `type` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `description` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `model` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `created` DATETIME NOT NULL\n, `created_by` BIGINT(20) NOT NULL\n, `updated` DATETIME NOT NULL\n, `updated_by` BIGINT(20) NOT NULL\n, `version` BIGINT(20) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:17'),
+(328, 'add index library_element org_id-folder_id-name-kind', 'CREATE UNIQUE INDEX `UQE_library_element_org_id_folder_id_name_kind` ON `library_element` (`org_id`,`folder_id`,`name`,`kind`);', 1, '', '2022-07-05 19:05:17'),
+(329, 'create library_element_connection table v1', 'CREATE TABLE IF NOT EXISTS `library_element_connection` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `element_id` BIGINT(20) NOT NULL\n, `kind` BIGINT(20) NOT NULL\n, `connection_id` BIGINT(20) NOT NULL\n, `created` DATETIME NOT NULL\n, `created_by` BIGINT(20) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;', 1, '', '2022-07-05 19:05:17'),
+(330, 'add index library_element_connection element_id-kind-connection_id', 'CREATE UNIQUE INDEX `UQE_library_element_connection_element_id_kind_connection_id` ON `library_element_connection` (`element_id`,`kind`,`connection_id`);', 1, '', '2022-07-05 19:05:17');
 
 -- --------------------------------------------------------
 
@@ -844,8 +1023,8 @@ CREATE TABLE `server_lock` (
 --
 
 INSERT INTO `server_lock` (`id`, `operation_uid`, `version`, `last_execution`) VALUES
-(1, 'cleanup expired auth tokens', 23, 1625864549),
-(2, 'delete old login attempts', 1573, 1625885549);
+(1, 'cleanup expired auth tokens', 24, 1657047918),
+(2, 'delete old login attempts', 1574, 1657048518);
 
 -- --------------------------------------------------------
 
@@ -1014,7 +1193,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `version`, `login`, `email`, `name`, `password`, `salt`, `rands`, `company`, `org_id`, `is_admin`, `email_verified`, `theme`, `created`, `updated`, `help_flags1`, `last_seen_at`, `is_disabled`) VALUES
-(1, 0, 'admin', 'admin@localhost', '', 'b41ae50833ba329102f018590f621fa5157df08ebbb2579d7623961588acdb3afb0a02fa78635b780f085c450130735eed5e', 'mdtyscitLB', 'kfbihpdw4N', '', 1, 1, 0, '', '2021-05-25 22:23:23', '2021-07-01 20:51:18', 0, '2021-07-10 02:40:06', 0);
+(1, 0, 'admin', 'admin@localhost', '', 'b41ae50833ba329102f018590f621fa5157df08ebbb2579d7623961588acdb3afb0a02fa78635b780f085c450130735eed5e', 'mdtyscitLB', 'kfbihpdw4N', '', 1, 1, 0, '', '2021-05-25 22:23:23', '2021-07-01 20:51:18', 0, '2022-07-05 19:16:26', 0);
 
 -- --------------------------------------------------------
 
@@ -1062,7 +1241,7 @@ CREATE TABLE `user_auth_token` (
 --
 
 INSERT INTO `user_auth_token` (`id`, `user_id`, `auth_token`, `prev_auth_token`, `user_agent`, `client_ip`, `auth_token_seen`, `seen_at`, `rotated_at`, `created_at`, `updated_at`, `revoked_at`) VALUES
-(5, 1, '5fd77382ec9bc8907e1d3aea3e9f29690bec7d4fc8314e0c93907d75455af2f4', 'f3fb6e901dd6b380dde066d086568302182c4786c6662820a715561689968b7e', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36', '172.20.0.1', 1, 1625884810, 1625884806, 1625365746, 1625365746, 0);
+(6, 1, 'fe5568259779dd2dc15da155e871fc6c3b0d9ad647b6c363fd19093a9a0f645f', 'f71f3798d96b7f094e3ce3add306942f5eabf2d954e6f478e3ecda95dbcb02ac', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.66 Safari/537.36', '172.30.0.1', 1, 1657048580, 1657048579, 1657047962, 1657047962, 0);
 
 --
 -- Indexes for dumped tables
@@ -1076,6 +1255,20 @@ ALTER TABLE `alert`
   ADD KEY `IDX_alert_org_id_id` (`org_id`,`id`),
   ADD KEY `IDX_alert_state` (`state`),
   ADD KEY `IDX_alert_dashboard_id` (`dashboard_id`);
+
+--
+-- Indexes for table `alert_configuration`
+--
+ALTER TABLE `alert_configuration`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `alert_instance`
+--
+ALTER TABLE `alert_instance`
+  ADD PRIMARY KEY (`rule_org_id`,`rule_uid`,`labels_hash`),
+  ADD KEY `IDX_alert_instance_rule_org_id_rule_uid_current_state` (`rule_org_id`,`rule_uid`,`current_state`),
+  ADD KEY `IDX_alert_instance_rule_org_id_current_state` (`rule_org_id`,`current_state`);
 
 --
 -- Indexes for table `alert_notification`
@@ -1093,12 +1286,29 @@ ALTER TABLE `alert_notification_state`
   ADD KEY `IDX_alert_notification_state_alert_id` (`alert_id`);
 
 --
+-- Indexes for table `alert_rule`
+--
+ALTER TABLE `alert_rule`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `UQE_alert_rule_org_id_uid` (`org_id`,`uid`),
+  ADD UNIQUE KEY `UQE_alert_rule_org_id_namespace_uid_title` (`org_id`,`namespace_uid`,`title`),
+  ADD KEY `IDX_alert_rule_org_id_namespace_uid_rule_group` (`org_id`,`namespace_uid`,`rule_group`);
+
+--
 -- Indexes for table `alert_rule_tag`
 --
 ALTER TABLE `alert_rule_tag`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UQE_alert_rule_tag_alert_id_tag_id` (`alert_id`,`tag_id`),
   ADD KEY `IDX_alert_rule_tag_alert_id` (`alert_id`);
+
+--
+-- Indexes for table `alert_rule_version`
+--
+ALTER TABLE `alert_rule_version`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `UQE_alert_rule_version_rule_org_id_rule_uid_version` (`rule_org_id`,`rule_uid`,`version`),
+  ADD KEY `IDX_alert_rule_version_rule_org_id_rule_namespace_uid_rule_group` (`rule_org_id`,`rule_namespace_uid`,`rule_group`);
 
 --
 -- Indexes for table `annotation`
@@ -1198,6 +1408,20 @@ ALTER TABLE `data_source`
   ADD UNIQUE KEY `UQE_data_source_org_id_uid` (`org_id`,`uid`),
   ADD KEY `IDX_data_source_org_id` (`org_id`),
   ADD KEY `IDX_data_source_org_id_is_default` (`org_id`,`is_default`);
+
+--
+-- Indexes for table `library_element`
+--
+ALTER TABLE `library_element`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `UQE_library_element_org_id_folder_id_name_kind` (`org_id`,`folder_id`,`name`,`kind`);
+
+--
+-- Indexes for table `library_element_connection`
+--
+ALTER TABLE `library_element_connection`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `UQE_library_element_connection_element_id_kind_connection_id` (`element_id`,`kind`,`connection_id`);
 
 --
 -- Indexes for table `login_attempt`
@@ -1363,6 +1587,12 @@ ALTER TABLE `alert`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `alert_configuration`
+--
+ALTER TABLE `alert_configuration`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `alert_notification`
 --
 ALTER TABLE `alert_notification`
@@ -1375,9 +1605,21 @@ ALTER TABLE `alert_notification_state`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `alert_rule`
+--
+ALTER TABLE `alert_rule`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `alert_rule_tag`
 --
 ALTER TABLE `alert_rule_tag`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `alert_rule_version`
+--
+ALTER TABLE `alert_rule_version`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
@@ -1432,13 +1674,25 @@ ALTER TABLE `dashboard_tag`
 -- AUTO_INCREMENT for table `dashboard_version`
 --
 ALTER TABLE `dashboard_version`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `data_source`
 --
 ALTER TABLE `data_source`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `library_element`
+--
+ALTER TABLE `library_element`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `library_element_connection`
+--
+ALTER TABLE `library_element_connection`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `login_attempt`
@@ -1450,7 +1704,7 @@ ALTER TABLE `login_attempt`
 -- AUTO_INCREMENT for table `migration_log`
 --
 ALTER TABLE `migration_log`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=280;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=331;
 
 --
 -- AUTO_INCREMENT for table `org`
@@ -1558,7 +1812,7 @@ ALTER TABLE `user_auth`
 -- AUTO_INCREMENT for table `user_auth_token`
 --
 ALTER TABLE `user_auth_token`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

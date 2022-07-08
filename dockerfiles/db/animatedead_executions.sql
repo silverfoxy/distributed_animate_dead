@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.0
+-- version 5.1.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Apr 30, 2021 at 02:38 PM
--- Server version: 8.0.23
--- PHP Version: 7.4.16
+-- Generation Time: Jul 05, 2022 at 06:54 PM
+-- Server version: 8.0.25
+-- PHP Version: 7.4.20
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,6 +29,7 @@ USE `animatedead_executions`;
 -- Table structure for table `debug`
 --
 
+DROP TABLE IF EXISTS `debug`;
 CREATE TABLE `debug` (
   `id` int NOT NULL,
   `filename` varchar(500) NOT NULL,
@@ -38,30 +39,7 @@ CREATE TABLE `debug` (
   `new_branch_coverage` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `debug`
---
-ALTER TABLE `debug`
-  ADD PRIMARY KEY (`id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `debug`
---
-ALTER TABLE `debug`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `executions`
@@ -76,7 +54,9 @@ CREATE TABLE `executions` (
   `termination` tinyint(1) NOT NULL DEFAULT '0',
   `branch_filename` text NOT NULL,
   `branch_linenumber` int NOT NULL,
-  `lookahead_coverage` int NOT NULL
+  `lookahead_coverage` int NOT NULL,
+  `new_files` int NOT NULL DEFAULT '0',
+  `new_lines` int NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -97,6 +77,12 @@ CREATE TABLE `jobs` (
 --
 
 --
+-- Indexes for table `debug`
+--
+ALTER TABLE `debug`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `executions`
 --
 ALTER TABLE `executions`
@@ -107,6 +93,16 @@ ALTER TABLE `executions`
 --
 ALTER TABLE `jobs`
   ADD PRIMARY KEY (`execution_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `debug`
+--
+ALTER TABLE `debug`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

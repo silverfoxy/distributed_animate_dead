@@ -46,7 +46,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
 
         $this->channel->basic_publish($msg, '', MANAGER_QUEUE);
 
-        echo sprintf(' [%s] Sent the termination info "%s" to the queue [%s].'.PHP_EOL, date("h:i:sa"), $task_id, MANAGER_QUEUE);
+        echo sprintf(' [%s] Sent the termination info "%s" to the queue [%s] for %s.'.PHP_EOL, date("h:i:sa"), $task_id, $execution_id, MANAGER_QUEUE);
     }
 
     public function add_reanimation_task($init_env, $httpverb, $targetfile, $reanimationarray, $branch_filename, $branch_linenumber, $line_coverage_hash, $symbol_table_hash, $coverage_info, $execution_id, $extended_logs_emulation_mode, $new_branch_coverage=[], $current_priority=null) {
