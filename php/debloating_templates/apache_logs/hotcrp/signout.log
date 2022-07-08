@@ -1,1 +1,0 @@
-172.21.0.1 - - [04/May/2021:18:54:51 +0000] "POST /hotcrp/signout?post=b7a9b9e6df46 HTTP/1.1" 302 892 "http://localhost:8085/hotcrp/deadlines" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"

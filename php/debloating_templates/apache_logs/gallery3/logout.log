@@ -1,1 +1,0 @@
-172.21.0.1 - - [04/May/2021:16:24:10 +0000] "GET /gallery3/index.php/logout?csrf=e2d6612c47cb71504ad4a5c768de2900&continue_url=http%3A%2F%2Flocalhost%3A8085%2Fgallery3%2Findex.php%2F HTTP/1.1" 302 964 "http://localhost:8085/gallery3/index.php/admin/users" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
