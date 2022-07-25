@@ -104,7 +104,7 @@ class WraithOrchestrator {
             echo $conn->error.PHP_EOL;
             return;
         }
-        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, parent_id, termination, branch_filename, branch_linenumber, lookahead_coverage, new_files, new_lines) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, parent_id, termination, branch_filename, branch_linenumber, lookahead_coverage, new_files, new_lines) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $query->bind_param("sissisiiii", $task_id, $priority, $execution_id, $parent_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines);
         $result = $query->execute();
         if ($result === false) {
