@@ -61,20 +61,21 @@ class WraithOrchestrator {
             $coverage_info = $message_body['coverage_info'] ?? [];
             $new_branch_coverage = $message_body['new_branch_coverage'] ?? [];
             $parent_priority = $message_body['current_priority'] ?? 0;
+            $parent_id = $message_body['parent_id'] ?? 0;
             if (isset($message_body) && array_key_exists('init_env', $message_body)) {
                 list($priority, $new_files, $new_lines, $lookahead) = $this->merge_coverage('reanimations', $coverage_info, $new_branch_coverage, $parent_priority);
                 // Received a reanimation task
                 echo sprintf(' [%s] Received reanimation state for %s.', date("h:i:sa"), $message_body['execution_id'] ?? 'none'), PHP_EOL;
                 $reanimation_state = $message_body;
                 $reanimation_state_object = new ReanimationState($reanimation_state['init_env'], $reanimation_state['httpverb'], $reanimation_state['reanimation_array'], $reanimation_state['targetfile'], $reanimation_state['branch_linenumber'], $reanimation_state['line_coverage_hash'], $reanimation_state['symbol_table_hash']);
-                $this->worker->add_execution_task($priority, $task_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], $lookahead, $new_files, $new_lines);
+                $this->worker->add_execution_task($priority, $task_id, $parent_id, $reanimation_state_object->init_env, $reanimation_state_object->httpverb, $reanimation_state_object->targetfile, $reanimation_state_object->reanimation_array, $reanimation_state_object->linenumber, $reanimation_state_object->line_coverage_hash, $reanimation_state_object->symbol_table_hash, $message_body['execution_id'], $message_body['extended_logs_emulation_mode']);
+                $this->log_execution_to_db($task_id, $parent_id, $priority, $message_body['execution_id'], false, $message_body['branch_filename'], $message_body['branch_linenumber'], $lookahead, $new_files, $new_lines);
             }
             else {
                 // Received a termination task
                 list($priority, $new_files, $new_lines, $lookahead) = $this->merge_coverage('terminations', $coverage_info, $new_branch_coverage, $parent_priority);
                 echo sprintf(' [%s] Received termination info for %s (%d priority).', date("h:i:sa"), $message_body['execution_id'] ?? 'none', $priority), PHP_EOL;
-                $this->log_execution_to_db($task_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  $lookahead, $new_files, $new_lines);
+                $this->log_execution_to_db($task_id, $parent_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  $lookahead, $new_files, $new_lines);
             }
             echo " [+] Done\n";
         };
@@ -96,15 +97,15 @@ class WraithOrchestrator {
         $this->connection->close();
     }
 
-    protected function log_execution_to_db($task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines) {
+    protected function log_execution_to_db($task_id, $parent_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines) {
         $conn = new mysqli('db', 'root', 'root', 'animatedead_executions');
         if ($conn->connect_error) {
             echo sprintf('Failed to log execution [&s] to database (Connection error).'.PHP_EOL, $task_id);
             echo $conn->error.PHP_EOL;
             return;
         }
-        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, termination, branch_filename, branch_linenumber, lookahead_coverage, new_files, new_lines) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $query->bind_param("sisisiiii", $task_id, $priority, $execution_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines);
+        $query = $conn->prepare("INSERT INTO executions (id, priority, fk_task_execution_id, parent_id, termination, branch_filename, branch_linenumber, lookahead_coverage, new_files, new_lines) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $query->bind_param("sissisiiii", $task_id, $priority, $execution_id, $parent_id, $termination, $branch_filename, $branch_linenumber, $lookahead, $new_files, $new_lines);
         $result = $query->execute();
         if ($result === false) {
             echo sprintf('Failed to log execution [%s] to database (Query execution error).'.PHP_EOL, $task_id);
@@ -244,10 +245,10 @@ class WraithOrchestrator {
                         $init_env['_FILES'] = [];
                         $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                         if (isset($parameters['reanimation']))  {
-                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, false, [], 100);
+                            $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, 0, 0, false, [], 100);
                         }
                         else {
-                            $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, false);
+                            $this->worker->add_execution_task(100, uniqid(), 0, $init_env, $verb, $target_file, [], 0, '', '', $execution_id, false);
                         }
                     }
                 }
@@ -281,10 +282,10 @@ class WraithOrchestrator {
                     $init_env['_FILES'] = $log_entry['files'] ?? [];
                     $init_env['_REQUEST'] = array_merge($init_env['_GET'], $init_env['_POST'], $init_env['_COOKIE']);
                     if (isset($params['reanimation']))  {
-                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, true, [], 100);
+                        $this->worker->add_reanimation_task($init_env, $verb, $target_file, $reanimation_array ?? [], '', 0, '', '', [], $execution_id, 0, true, [], 100);
                     }
                     else {
-                        $this->worker->add_execution_task(100, uniqid(), $init_env, $verb, $target_file, [], 0, '', '', $execution_id, true);
+                        $this->worker->add_execution_task(100, uniqid(), 0, $init_env, $verb, $target_file, [], 0, '', '', $execution_id, true);
                     }
                 }
             }
