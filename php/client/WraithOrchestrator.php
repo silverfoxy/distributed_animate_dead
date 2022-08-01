@@ -153,6 +153,7 @@ class WraithOrchestrator {
         $new_files = 0;
         $new_lines = 0;
 
+        // Parent coverage
         foreach ($new_coverage_info as $filename => $lines) {
             $line_count = $this->redis->sAddArray("{$datastore}_{$filename}", array_keys($lines));;
             $new_lines += $line_count;
@@ -172,7 +173,7 @@ class WraithOrchestrator {
             }
         }
         // $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
-        $priority = $new_lines * 10 + $new_branch_lines + $parent_priority / 2;
+        $priority = $new_lines * 2 + $new_branch_lines + $parent_priority / 5 + random_int(0, 20);
         $priority = min($priority, 100);
         if ($priority < 1) {
             if ($new_lines > 0 || $new_branch_lines > 0) {
