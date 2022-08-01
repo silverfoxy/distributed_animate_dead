@@ -169,10 +169,10 @@ class WraithOrchestrator {
             $new_branch = $this->redis->sAdd("{$branch_datastore}_{$branch_file}_{$branch_line}_{$branch_taken}");
         }
         // $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
-        $priority = $new_lines * 2 + ($new_branch === true ? 100 : 0) + $parent_priority / 5 + random_int(0, 20);
+        $priority = $new_lines * 2 + ($new_branch ? 100 : 0) + $parent_priority / 5 + random_int(0, 20);
         $priority = min($priority, 100);
 
-        return [(int)$priority, $new_files, $new_lines, $new_branch === true ? 1 : 0];
+        return [(int)$priority, $new_files, $new_lines, $new_branch ? 1 : 0];
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id, $htaccess_bool) {
