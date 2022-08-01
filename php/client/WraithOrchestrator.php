@@ -162,28 +162,17 @@ class WraithOrchestrator {
             }
             // $total_covered_lines_in_covered_files += $this->redis->sCard($filename);
         }
-        $new_branch_lines = 0;
-        if ($new_branch_coverage !== []) {
-            foreach ($new_branch_coverage as $filename => $lines) {
-                foreach ($lines as $line) {
-                    if ($this->redis->sIsMember("{$datastore}_{$filename}", $line) === false) {
-                        $new_branch_lines++;
-                    }
-                }
-            }
+        $new_branch = true;
+        $branch_datastore = 'branch';
+        if (is_array($new_branch_coverage) && count($new_branch_coverage) > 0) {
+            list($branch_file, $branch_line, $branch_taken) = $new_branch_coverage;
+            $new_branch = $this->redis->sAdd("{$branch_datastore}_{$branch_file}_{$branch_line}_{$branch_taken}");
         }
         // $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
-        $priority = $new_lines * 2 + $new_branch_lines + $parent_priority / 5 + random_int(0, 20);
+        $priority = $new_lines * 2 + ($new_branch === true ? 100 : 0) + $parent_priority / 5 + random_int(0, 20);
         $priority = min($priority, 100);
-        if ($priority < 1) {
-            if ($new_lines > 0 || $new_branch_lines > 0) {
-                // If any new lines are or will be covered, set the priority to a minimum of 1.
-                $priority = 1;
-            }
-        }
-        $lookahead = $new_branch_lines;
 
-        return [(int)$priority, $new_files, $new_lines, $lookahead];
+        return [(int)$priority, $new_files, $new_lines, $new_branch === true ? 1 : 0];
     }
 
     protected function parse_cli_params(int $argc, array $argv, $connection, $channel, $execution_id, $htaccess_bool) {
