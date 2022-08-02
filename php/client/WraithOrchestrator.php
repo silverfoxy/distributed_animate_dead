@@ -166,7 +166,7 @@ class WraithOrchestrator {
         $branch_datastore = 'branch';
         if (is_array($new_branch_coverage) && count($new_branch_coverage) > 0) {
             list($branch_file, $branch_line, $branch_taken) = $new_branch_coverage;
-            $new_branch = $this->redis->sAdd("{$branch_datastore}_{$branch_file}_{$branch_line}_{$branch_taken}");
+            $new_branch = $this->redis->sAdd("{$branch_datastore}_{$branch_file}_{$branch_line}_{$branch_taken}", $branch_taken);
         }
         // $priority = ((double)$new_lines / $total_covered_lines_in_covered_files) * 100 + $new_branch_lines;
         $priority = $new_lines * 2 + ($new_branch ? 100 : 0) + $parent_priority / 5 + random_int(0, 20);
