@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.1
+-- version 5.1.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: db:3306
--- Generation Time: Jul 05, 2022 at 06:54 PM
--- Server version: 8.0.25
--- PHP Version: 7.4.20
+-- Generation Time: Jul 25, 2022 at 07:14 PM
+-- Server version: 8.0.28
+-- PHP Version: 8.0.15
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,7 +29,6 @@ USE `animatedead_executions`;
 -- Table structure for table `debug`
 --
 
-DROP TABLE IF EXISTS `debug`;
 CREATE TABLE `debug` (
   `id` int NOT NULL,
   `filename` varchar(500) NOT NULL,
@@ -45,12 +44,12 @@ CREATE TABLE `debug` (
 -- Table structure for table `executions`
 --
 
-DROP TABLE IF EXISTS `executions`;
 CREATE TABLE `executions` (
   `id` varchar(13) NOT NULL,
   `priority` int NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `fk_task_execution_id` varchar(13) NOT NULL,
+  `parent_id` varchar(100) NOT NULL,
   `termination` tinyint(1) NOT NULL DEFAULT '0',
   `branch_filename` text NOT NULL,
   `branch_linenumber` int NOT NULL,
@@ -65,7 +64,6 @@ CREATE TABLE `executions` (
 -- Table structure for table `jobs`
 --
 
-DROP TABLE IF EXISTS `jobs`;
 CREATE TABLE `jobs` (
   `execution_id` varchar(13) NOT NULL,
   `log_filename` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,

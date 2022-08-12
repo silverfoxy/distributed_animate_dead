@@ -1,6 +1,3 @@
 [submodule "php/client/animate_dead"]
 	url = git@github.com:silverfoxy/AnimateDead.git
 	path = php/client/animate_dead
-[submodule "php/analysis"]
-	url = git@github.com:silverfoxy/animate_dead_coverage_logs.git
-	path = php/analysis
