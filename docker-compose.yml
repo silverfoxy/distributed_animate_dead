@@ -14,10 +14,11 @@ services:
             resources:
                 limits:
                     cpus: "1"
-                    memory: 2G
+                    memory: 8G
                 reservations:
                     cpus: "1"
                     memory: 512M
+        tty: true
     master:
       build: dockerfiles/Master
       tty: true
@@ -26,7 +27,7 @@ services:
           - ./php/analysis:/home/ubuntu/analysis
           - ./php/debloating_templates:/home/ubuntu/debloating_templates
       deploy:
-        replicas: 5
+        replicas: 4
         resources:
           limits:
             cpus: "1"
