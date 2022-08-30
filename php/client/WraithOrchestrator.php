@@ -267,6 +267,11 @@ class WraithOrchestrator {
                     $init_env['_SERVER']['REQUEST_METHOD'] = $verb;
                     $init_env['_SERVER']['SCRIPT_FILENAME'] = $init_env['_SERVER']['PHP_SELF'] = $target_file;
                     $init_env['_SERVER']['SCRIPT_NAME'] = $init_env['_SERVER']['SCRIPT_FILENAME'] = $init_env['_SERVER']['PATH_TRANSLATED'] = "/" . basename($target_file);
+
+                    $init_env['_SERVER']['REQUEST_URI'] = $log_entry['request_uri'] ?? '';
+                    // Not implemented in extended logs yet
+                    // $init_env['_SERVER']['HTTP_REFERER'] = $log_entry['referer'] ?? '';
+
                     $init_env['_GET'] = $log_entry['get'] ?? [];
                     $init_env['_POST'] = $log_entry['post'] ?? [];
                     $init_env['_FILES'] = $log_entry['files'] ?? [];
