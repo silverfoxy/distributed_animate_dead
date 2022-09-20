@@ -28,9 +28,9 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
 
         $this->callback = function ($msg) {
             $params = json_decode($msg->body, true);
-            echo sprintf(' [+] Received "%s" priority: %d (extended logs: %s)'.PHP_EOL, $msg->get('correlation_id'), $msg->get('priority'), $params['extended_logs_emulation_mode'] ? 'true' : 'false');
+            echo sprintf(' [+] Received "%s" priority: %d (extended logs: %s)'.PHP_EOL, $msg->get('correlation_id'), 0, $params['extended_logs_emulation_mode'] ? 'true' : 'false');
             // var_dump($params['extended_logs_emulation_mode']);
-            $coverage_info = start_engine($params['init_env'], $params['httpverb'], $params['targetfile'], $this, $params['reanimation_array'], $msg->get('correlation_id'), $params['execution_id'], $params['parent_id'], 4, $params['extended_logs_emulation_mode'], $msg->get('priority'));
+            $coverage_info = start_engine($params['init_env'], $params['httpverb'], $params['targetfile'], $this, $params['reanimation_array'], $msg->get('correlation_id'), $params['execution_id'], $params['parent_id'], 4, $params['extended_logs_emulation_mode'], 0);
             $this->add_termination_task($coverage_info, $params['execution_id'], $params['parent_id']);
             echo " [+] Done\n";
             $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
