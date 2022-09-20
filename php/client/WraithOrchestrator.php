@@ -36,7 +36,7 @@ class WraithOrchestrator {
         $this->channel = $this->connection->channel();
 
         // Create the queue
-        $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false, new AMQPTable(['x-max-priority' => 100]));
+        $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false);
 
         $this->worker = new AnimateDeadWorker();
 
@@ -75,7 +75,7 @@ class WraithOrchestrator {
                 // Received a termination task
                 list($priority, $new_files, $new_lines, $lookahead) = $this->merge_coverage('terminations', $coverage_info, $new_branch_coverage, $parent_priority);
                 echo sprintf(' [%s] Received termination info for %s (%d priority).', date("h:i:sa"), $message_body['execution_id'] ?? 'none', $priority), PHP_EOL;
-                $this->log_execution_to_db($task_id, $parent_id, $priority, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  $lookahead, $new_files, $new_lines);
+                $this->log_execution_to_db($task_id, $parent_id, 0, $message_body['execution_id'], true, $message_body['branch_filename'] ?? '', $message_body['branch_linenumber'] ?? 0,  $lookahead, $new_files, $new_lines);
             }
             echo " [+] Done\n";
         };

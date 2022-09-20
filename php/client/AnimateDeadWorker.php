@@ -24,7 +24,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
         $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $_ENV['RABBITMQ_DEFAULT_USER'], $_ENV['RABBITMQ_DEFAULT_PASS']);
         $this->channel = $this->connection->channel();
 
-        $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false, new AMQPTable(['x-max-priority' => 100]));
+        $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false);
 
         $this->callback = function ($msg) {
             $params = json_decode($msg->body, true);
@@ -88,9 +88,9 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
             'parent_id' => $parent_id,
             'extended_logs_emulation_mode' => $extended_logs_emulation_mode];
 
-        $msg = new AMQPMessage(json_encode($params), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT, 'correlation_id' => $task_id, 'priority' => $priority]);
+        $msg = new AMQPMessage(json_encode($params), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT, 'correlation_id' => $task_id]);
 
-        $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false, new AMQPTable(['x-max-priority' => 100]));
+        $this->channel->queue_declare(WORKERS_QUEUE, false, true, false, false, false);
         $this->channel->basic_publish($msg, '', WORKERS_QUEUE);
 
         echo sprintf(' [%s] Sent the execution job "%s" priority: %d to the queue [%s].'.PHP_EOL, date("h:i:sa"), $task_id, $priority, WORKERS_QUEUE);
@@ -98,7 +98,7 @@ class AnimateDeadWorker implements IAnimateDeadWorker {
 
     public function get_tasks() {
         $this->channel->basic_qos(null, 1, null);
-        $this->channel->basic_consume(WORKERS_QUEUE, '', false, false, false, false, $this->callback, false, new AMQPTable(['x-max-priority' => 100]));
+        $this->channel->basic_consume(WORKERS_QUEUE, '', false, false, false, false, $this->callback, false);
 
         echo " [*] Waiting for messages. To exit press CTRL+C\n";
         while ($this->channel->is_consuming()) {
