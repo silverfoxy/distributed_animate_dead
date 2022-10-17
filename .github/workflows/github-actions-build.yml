@@ -11,62 +11,60 @@ jobs:
   Build-Dependencies:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup SSH Access For SubModules
+        uses: shaunco/ssh-agent@git-repo-mapping
+        with:
+          ssh-private-key: |
+            ${{ secrets.SSH_ANIMATEDEAD }}
+            ${{ secrets.SSH_MALMAX }}
+            ${{ secrets.SSH_APACHELOGS }}
+            ${{ secrets.SSH_COVERAGELOGS }}
+          repo-mappings: |
+            github.com/silverfoxy/AnimateDead
+            github.com/silverfoxy/malmax
+            github.com/silverfoxy/animate_dead_logs
+            github.com/silverfoxy/animate_dead_coverage_logs
+      - name: Checkout The Repositories
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install Dependencies For Distributed AnimateDead
+        working-directory: php/client
+        run: composer install --ignore-platform-reqs
+      - name: Install Dependencies For AnimateDead
+        working-directory: php/client/animate_dead
+        run: composer install --ignore-platform-reqs
+      - name: Install Dependencies For MalMax
+        working-directory: php/client/animate_dead/vendor/silverfoxy/malmax
+        run: composer install --ignore-platform-reqs
+      - name: Install Dependencies For PHP-Emul
+        working-directory: php/client/animate_dead/vendor/silverfoxy/malmax/php-emul
+        run: composer install --ignore-platform-reqs
+      - name: Copy Default Config
+        working-directory: php/client/animate_dead/
+        run:  cp config.sample.json config.json
+      - name: Create Release Directory
+        run:  rsync -arv --exclude='.git/' --exclude='.github/' --exclude='.gitignore' . ./distributed_animate_dead_${{ env.RELEASE_VERSION }}
+      - name: Create Zip Archive for Release
+        run: zip -r distributed_animate_dead.zip ./distributed_animate_dead_${{ env.RELEASE_VERSION }}
       - name: Get Release Tag
-        run:  echo ${GITHUB_REF#refs/heads/releases/}
-#      - name: Setup SSH Access For SubModules
-#        uses: shaunco/ssh-agent@git-repo-mapping
-#        with:
-#          ssh-private-key: |
-#            ${{ secrets.SSH_ANIMATEDEAD }}
-#            ${{ secrets.SSH_MALMAX }}
-#            ${{ secrets.SSH_APACHELOGS }}
-#            ${{ secrets.SSH_COVERAGELOGS }}
-#          repo-mappings: |
-#            github.com/silverfoxy/AnimateDead
-#            github.com/silverfoxy/malmax
-#            github.com/silverfoxy/animate_dead_logs
-#            github.com/silverfoxy/animate_dead_coverage_logs
-#      - name: Checkout The Repositories
-#        uses: actions/checkout@v2
-#        with:
-#          submodules: recursive
-#      - name: Install Dependencies For Distributed AnimateDead
-#        working-directory: php/client
-#        run: composer install --ignore-platform-reqs
-#      - name: Install Dependencies For AnimateDead
-#        working-directory: php/client/animate_dead
-#        run: composer install --ignore-platform-reqs
-#      - name: Install Dependencies For MalMax
-#        working-directory: php/client/animate_dead/vendor/silverfoxy/malmax
-#        run: composer install --ignore-platform-reqs
-#      - name: Install Dependencies For PHP-Emul
-#        working-directory: php/client/animate_dead/vendor/silverfoxy/malmax/php-emul
-#        run: composer install --ignore-platform-reqs
-#      - name: Copy Default Config
-#        working-directory: php/client/animate_dead/
-#        run:  cp config.sample.json config.json
-#      - name: Create Release Directory
-#        run:  rsync -arv --exclude='.git/' --exclude='.github/' --exclude='.gitignore' . ./distributed_animate_dead_${{ env.RELEASE_VERSION }}
-#      - name: Create Zip Archive for Release
-#        run: zip -r distributed_animate_dead.zip ./distributed_animate_dead_${{ env.RELEASE_VERSION }}
-#      - name: Get Release Tag
-#        run:  echo "RELEASE_VERSION=${GITHUB_REF#refs/heads/releases/*/}" >> $GITHUB_ENV
-#      - name: Create Release
-#        uses: actions/create-release@v1
-#        id:   create_release
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          tag_name: ${{ env.RELEASE_VERSION }}
-#          release_name: ${{ env.RELEASE_VERSION }}
-#          draft: false
-#          prerelease: false
-#      - name: Add Release Assets
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: ./distributed_animate_dead.zip
-#          asset_name: distributed_animate_dead_${{ env.RELEASE_VERSION }}.zip
-#          asset_content_type: application/zip
+        run:  echo "RELEASE_VERSION=${GITHUB_REF#refs/heads/releases/}" >> $GITHUB_ENV
+      - name: Create Release
+        uses: actions/create-release@v1
+        id:   create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: ${{ env.RELEASE_VERSION }}
+          draft: false
+          prerelease: false
+      - name: Add Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./distributed_animate_dead.zip
+          asset_name: distributed_animate_dead_${{ env.RELEASE_VERSION }}.zip
+          asset_content_type: application/zip
