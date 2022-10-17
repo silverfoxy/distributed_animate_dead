@@ -47,14 +47,16 @@ jobs:
         run:  rsync -arv --exclude='.git/' --exclude='.github/' --exclude='.gitignore' . ./release
       - name: Create Zip Archive for Release
         run: zip -r distributed_animate_dead.zip ./release
+      - name: Get Release Tag
+        run:  echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Create Release
         uses: actions/create-release@v1
         id:   create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: ${{ env.RELEASE_VERSION }}
           draft: false
           prerelease: false
       - name: Add Release Assets
@@ -64,5 +66,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./distributed_animate_dead.zip
-          asset_name: distributed_animate_dead_v${{ github.ref }}.zip
+          asset_name: distributed_animate_dead_${{ env.RELEASE_VERSION }}.zip
           asset_content_type: application/zip
