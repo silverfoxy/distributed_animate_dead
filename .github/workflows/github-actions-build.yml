@@ -43,6 +43,10 @@ jobs:
       - name: Copy Default Config
         working-directory: php/client/animate_dead/
         run:  cp config.sample.json config.json
+      - name: Create Release Directory
+        run:  rsync -arv --exclude='.git/' --exclude='.github/' --exclude='.gitignore' . ./release
+      - name: Create Zip Archive for Release
+        run: zip -r distributed_animate_dead.zip ./release
       - name: Create Release
         uses: actions/create-release@v1
         id:   create_release
