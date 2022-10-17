@@ -11,7 +11,20 @@ jobs:
   Build-Dependencies:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the main repository
+      - name: Setup SSH Access For SubModules
+        uses: shaunco/ssh-agent@git-repo-mapping
+        with:
+          ssh-private-key: |
+            ${{ secrets.SSH_ANIMATEDEAD }}
+            ${{ secrets.SSH_MALMAX }}
+            ${{ secrets.SSH_APACHELOGS }}
+            ${{ secrets.SSH_COVERAGELOGS }}
+          repo-mappings: |
+            github.com/silverfoxy/AnimateDead
+            github.com/silverfoxy/malmax
+            github.com/silverfoxy/animate_dead_logs
+            github.com/silverfoxy/animate_dead_coverage_logs
+      - name: Checkout The Main Repository
         uses: actions/checkout@v2
-      - name: Checkout dependencies
-        run:  git submodule update --init --recursive
+        with:
+          submodules: recursive
