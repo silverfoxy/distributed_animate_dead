@@ -1,0 +1,17 @@
+name: GitHub Build
+run-name: Build a release version of Distributed Animate Dead 🪦💀.
+on:
+  push:
+    branches:
+      - master
+      - 'releases/**'
+    tags:
+      - 'v**'
+jobs:
+  Build-Dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the main repository
+        uses: actions/checkout@v2
+      - name: Checkout dependencies
+        run:  git submodule update --init --recursive
