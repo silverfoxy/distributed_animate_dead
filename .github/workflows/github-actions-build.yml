@@ -29,17 +29,17 @@ jobs:
         with:
           submodules: recursive
       - name: Install Dependencies For Distributed AnimateDead
-        uses: php-actions/composer@v6
         working-directory: ./app/php/client
+        run: composer install --ignore-platform-reqs
       - name: Install Dependencies For AnimateDead
-        uses: php-actions/composer@v6
         working-directory: ./app/php/client/animate_dead
+        run: composer install --ignore-platform-reqs
       - name: Install Dependencies For MalMax
-        uses: php-actions/composer@v6
         working-directory: ./app/php/client/animate_dead/vendor/silverfoxy/malmax
+        run: composer install --ignore-platform-reqs
       - name: Install Dependencies For PHP-Emul
-        uses: php-actions/composer@v6
         working-directory: ./app/php/client/animate_dead/vendor/silverfoxy/malmax/php-emul
+        run: composer install --ignore-platform-reqs
       - name: Copy Default Config
         working-directory: ./app/php/client/animate_dead/
         run:  cp config.sample.json config.json
