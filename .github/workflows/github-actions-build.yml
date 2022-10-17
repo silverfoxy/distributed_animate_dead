@@ -43,3 +43,22 @@ jobs:
       - name: Copy Default Config
         working-directory: php/client/animate_dead/
         run:  cp config.sample.json config.json
+      - name: Create Release
+        uses: actions/create-release@v1
+        id:   create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ github.ref }}
+            release_name: ${{ github.ref }}
+            draft: false
+            prerelease: false
+      - name: Add Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./distributed_animate_dead.zip
+          asset_name: distributed_animate_dead_v${{ github.ref }}.zip
+          asset_content_type: application/zip
